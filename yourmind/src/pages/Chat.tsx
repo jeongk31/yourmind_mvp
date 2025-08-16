@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Box,
   TextField,
@@ -36,8 +36,8 @@ const Chat: React.FC = () => {
   const [showRiskAlert, setShowRiskAlert] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Initial counseling questions
-  const initialQuestions = [
+  // Initial counseling questions - memoized with useCallback
+  const initialQuestions = useCallback(() => [
     {
       id: 'welcome',
       text: '안녕하세요, 만나서 반가워요. 저는 오늘 당신의 이야기를 들어줄 상담 AI예요.',
@@ -56,7 +56,7 @@ const Chat: React.FC = () => {
       sender: 'ai' as const,
       timestamp: new Date(),
     }
-  ];
+  ], []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -69,9 +69,9 @@ const Chat: React.FC = () => {
   // Initialize chat with welcome questions
   useEffect(() => {
     if (messages.length === 0) {
-      setMessages(initialQuestions);
+      setMessages(initialQuestions());
     }
-  }, []);
+  }, [messages.length, initialQuestions]);
 
   const startNewChat = async () => {
     try {
@@ -80,7 +80,7 @@ const Chat: React.FC = () => {
       
       if (response.success) {
         setSessionId(response.sessionId);
-        setMessages(initialQuestions); // Show initial questions for new chat
+        setMessages(initialQuestions()); // Show initial questions for new chat
         setError(null);
         setRiskMessage(null);
         setShowRiskAlert(false);
