@@ -36,6 +36,28 @@ const Chat: React.FC = () => {
   const [showRiskAlert, setShowRiskAlert] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Initial counseling questions
+  const initialQuestions = [
+    {
+      id: 'welcome',
+      text: '안녕하세요, 만나서 반가워요. 저는 오늘 당신의 이야기를 들어줄 상담 AI예요.',
+      sender: 'ai' as const,
+      timestamp: new Date(),
+    },
+    {
+      id: 'reason',
+      text: '혹시 오늘 저를 찾아온 이유나 계기가 있을까요?',
+      sender: 'ai' as const,
+      timestamp: new Date(),
+    },
+    {
+      id: 'mood',
+      text: '지금 이 순간 기분을 한 단어로 표현하면 어떤가요?',
+      sender: 'ai' as const,
+      timestamp: new Date(),
+    }
+  ];
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -44,29 +66,31 @@ const Chat: React.FC = () => {
     scrollToBottom();
   }, [messages]);
 
-  // Initialize conversation on component mount
+  // Initialize chat with welcome questions
   useEffect(() => {
-    startNewChat();
+    if (messages.length === 0) {
+      setMessages(initialQuestions);
+    }
   }, []);
 
   const startNewChat = async () => {
     try {
       setIsTyping(true);
       const response = await apiService.startConversation();
-      setSessionId(response.sessionId);
       
-      const welcomeMessage: Message = {
-        id: '1',
-        text: response.message,
-        sender: 'ai',
-        timestamp: new Date(),
-      };
-      
-      setMessages([welcomeMessage]);
-      setIsTyping(false);
+      if (response.success) {
+        setSessionId(response.sessionId);
+        setMessages(initialQuestions); // Show initial questions for new chat
+        setError(null);
+        setRiskMessage(null);
+        setShowRiskAlert(false);
+      } else {
+        setError('새로운 상담을 시작할 수 없습니다. 잠시 후 다시 시도해주세요.');
+      }
     } catch (error) {
       console.error('Failed to start conversation:', error);
-      setError('상담을 시작할 수 없습니다. 잠시 후 다시 시도해주세요.');
+      setError('새로운 상담을 시작할 수 없습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
       setIsTyping(false);
     }
   };
