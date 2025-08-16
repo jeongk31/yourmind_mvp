@@ -1,26 +1,14 @@
 import React from 'react';
 import {
-  Container,
-  Typography,
   Box,
-  Card,
-  CardContent,
-  Grid,
+  Typography,
   Button,
-  Avatar,
+  Container,
   Chip,
-  useTheme,
+  useTheme
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import {
-  Psychology as PsychologyIcon,
-  Chat as ChatIcon,
-  Recommend as RecommendIcon,
-  Security as SecurityIcon,
-  Speed as SpeedIcon,
-  EmojiEmotions as EmojiIcon,
-} from '@mui/icons-material';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -28,37 +16,37 @@ const Home: React.FC = () => {
 
   const features = [
     {
-      icon: <ChatIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
+      icon: '💬',
       title: 'AI 상담',
       description: '24시간 언제든지 AI와 대화하며 고민을 털어놓을 수 있습니다.',
       color: 'primary',
     },
     {
-      icon: <PsychologyIcon sx={{ fontSize: 40, color: 'secondary.main' }} />,
+      icon: '🧠',
       title: '전문적 분석',
       description: 'AI가 당신의 상태를 분석하여 전문적인 조언을 제공합니다.',
       color: 'secondary',
     },
     {
-      icon: <RecommendIcon sx={{ fontSize: 40, color: 'success.main' }} />,
+      icon: '⭐',
       title: '맞춤 추천',
       description: '상황에 맞는 정신과나 상담사를 추천해드립니다.',
       color: 'success',
     },
     {
-      icon: <SecurityIcon sx={{ fontSize: 40, color: 'info.main' }} />,
+      icon: '🔒',
       title: '완전한 비밀',
       description: '모든 대화는 암호화되어 안전하게 보관됩니다.',
       color: 'info',
     },
     {
-      icon: <SpeedIcon sx={{ fontSize: 40, color: 'warning.main' }} />,
+      icon: '⚡',
       title: '즉시 상담',
       description: '대기 시간 없이 바로 상담을 시작할 수 있습니다.',
       color: 'warning',
     },
     {
-      icon: <EmojiIcon sx={{ fontSize: 40, color: 'error.main' }} />,
+      icon: '💙',
       title: '따뜻한 위로',
       description: '인간적인 감성으로 따뜻한 위로와 공감을 제공합니다.',
       color: 'error',
@@ -153,27 +141,30 @@ const Home: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
             >
-              <Card
+              <Box
                 sx={{
                   height: '100%',
                   textAlign: 'center',
                   p: 3,
+                  border: '1px solid',
+                  borderColor: 'grey.200',
+                  borderRadius: 2,
+                  backgroundColor: 'background.paper',
                   '&:hover': {
                     transform: 'translateY(-8px)',
                     transition: 'transform 0.3s ease-in-out',
+                    boxShadow: 3,
                   },
                 }}
               >
-                <CardContent>
-                  <Box sx={{ mb: 2 }}>{feature.icon}</Box>
-                  <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
-                    {feature.title}
-                  </Typography>
-                  <Typography variant="body1" color="text.secondary">
-                    {feature.description}
-                  </Typography>
-                </CardContent>
-              </Card>
+                <Box sx={{ mb: 2, fontSize: '3rem' }}>{feature.icon}</Box>
+                <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
+                  {feature.title}
+                </Typography>
+                <Typography variant="body1" color="text.secondary">
+                  {feature.description}
+                </Typography>
+              </Box>
             </motion.div>
           ))}
         </Box>
@@ -218,15 +209,16 @@ const Home: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.6 }}
       >
-        <Card
+        <Box
           sx={{
             background: 'linear-gradient(45deg, #FF6B9D 30%, #6B73FF 90%)',
             color: 'white',
             textAlign: 'center',
             py: 6,
+            borderRadius: 2,
           }}
         >
-          <CardContent>
+          <Box sx={{ px: 3 }}>
             <Typography variant="h3" sx={{ mb: 3, fontWeight: 700 }}>
               지금 바로 시작해보세요
             </Typography>
@@ -250,8 +242,8 @@ const Home: React.FC = () => {
             >
               무료 상담 시작하기
             </Button>
-          </CardContent>
-        </Card>
+          </Box>
+        </Box>
       </motion.div>
     </Container>
   );

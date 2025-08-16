@@ -1,37 +1,20 @@
 import React, { useState } from 'react';
 import {
-  Container,
   Box,
-  Card,
-  CardContent,
   Typography,
-  Button,
-  Chip,
-  Rating,
-  Avatar,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemAvatar,
-  Divider,
+  Container,
   Tabs,
   Tab,
   TextField,
   InputAdornment,
-  useTheme,
+  Card,
+  CardContent,
+  Rating,
+  Button,
+  Chip,
+  useTheme
 } from '@mui/material';
-import { motion } from 'framer-motion';
-import {
-  Search as SearchIcon,
-  LocationOn as LocationIcon,
-  Phone as PhoneIcon,
-  Language as LanguageIcon,
-  Star as StarIcon,
-  Psychology as PsychologyIcon,
-  LocalHospital as HospitalIcon,
-  AccessTime as TimeIcon,
-  AttachMoney as MoneyIcon,
-} from '@mui/icons-material';
+import { Search as SearchIcon, LocationOn as LocationIcon, Phone as PhoneIcon, Email as EmailIcon } from '@mui/icons-material';
 
 interface Professional {
   id: string;
@@ -50,8 +33,8 @@ interface Professional {
 }
 
 const Recommendations: React.FC = () => {
-  const [tabValue, setTabValue] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const theme = useTheme();
 
@@ -143,216 +126,189 @@ const Recommendations: React.FC = () => {
   ];
 
   const filteredProfessionals = professionals.filter(prof => {
-    const matchesSearch = prof.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         prof.specialty.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesSearch = prof.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         prof.specialty.some(s => s.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesLocation = !locationFilter || prof.location.includes(locationFilter);
-    const matchesType = tabValue === 0 ? prof.type === 'psychiatrist' : prof.type === 'counselor';
+    const matchesType = activeTab === 0 ? prof.type === 'psychiatrist' : prof.type === 'counselor';
     
     return matchesSearch && matchesLocation && matchesType;
   });
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
+    setActiveTab(newValue);
   };
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
-          <Typography variant="h3" sx={{ mb: 2, fontWeight: 700 }}>
-            전문가 추천
-          </Typography>
-          <Typography variant="h6" color="text.secondary" sx={{ mb: 4 }}>
-            AI 상담 결과를 바탕으로 최적의 전문가를 추천해드립니다
-          </Typography>
-        </Box>
-      </motion.div>
+      <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <Typography variant="h3" sx={{ mb: 2, fontWeight: 700 }}>
+          전문가 추천
+        </Typography>
+        <Typography variant="h6" color="text.secondary" sx={{ mb: 4 }}>
+          AI 상담 결과를 바탕으로 최적의 전문가를 추천해드립니다
+        </Typography>
+      </Box>
 
       {/* Search and Filter */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-        <Card sx={{ mb: 4 }}>
-          <CardContent>
-            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
-              <TextField
-                fullWidth
-                placeholder="전문가명 또는 전문분야로 검색"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-              <TextField
-                placeholder="지역 검색"
-                value={locationFilter}
-                onChange={(e) => setLocationFilter(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <LocationIcon />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{ minWidth: { xs: '100%', md: 200 } }}
-              />
-            </Box>
-          </CardContent>
-        </Card>
-      </motion.div>
+      <Card sx={{ mb: 4 }}>
+        <CardContent>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
+            <TextField
+              fullWidth
+              placeholder="전문가명 또는 전문분야로 검색"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <TextField
+              placeholder="지역 검색"
+              value={locationFilter}
+              onChange={(e) => setLocationFilter(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <LocationIcon />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ minWidth: { xs: '100%', md: 200 } }}
+            />
+          </Box>
+        </CardContent>
+      </Card>
 
       {/* Tabs */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-      >
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-          <Tabs value={tabValue} onChange={handleTabChange} centered>
-            <Tab 
-              label="정신과 의사" 
-              icon={<HospitalIcon />} 
-              iconPosition="start"
-              sx={{ minHeight: 64 }}
-            />
-            <Tab 
-              label="심리상담사" 
-              icon={<PsychologyIcon />} 
-              iconPosition="start"
-              sx={{ minHeight: 64 }}
-            />
-          </Tabs>
-        </Box>
-      </motion.div>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs value={activeTab} onChange={handleTabChange} centered>
+          <Tab 
+            label="정신과 의사" 
+            icon={<EmailIcon />} 
+            iconPosition="start"
+            sx={{ minHeight: 64 }}
+          />
+          <Tab 
+            label="심리상담사" 
+            icon={<EmailIcon />} 
+            iconPosition="start"
+            sx={{ minHeight: 64 }}
+          />
+        </Tabs>
+      </Box>
 
       {/* Results */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.4 }}
-      >
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          {filteredProfessionals.length === 0 ? (
-            <Card>
-              <CardContent sx={{ textAlign: 'center', py: 6 }}>
-                <Typography variant="h6" color="text.secondary">
-                  검색 결과가 없습니다.
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  다른 검색어를 시도해보세요.
-                </Typography>
-              </CardContent>
-            </Card>
-          ) : (
-            filteredProfessionals.map((prof, index) => (
-              <motion.div
-                key={prof.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <Card>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
-                      {/* Avatar and Basic Info */}
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 200 }}>
-                        <Avatar
-                          sx={{
-                            width: 80,
-                            height: 80,
-                            bgcolor: prof.type === 'psychiatrist' ? 'primary.main' : 'secondary.main',
-                            fontSize: '2rem',
-                          }}
-                        >
-                          {prof.type === 'psychiatrist' ? <HospitalIcon /> : <PsychologyIcon />}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="h6" fontWeight={600} sx={{ mb: 1 }}>
-                            {prof.name}
-                          </Typography>
-                          <Chip
-                            label={prof.type === 'psychiatrist' ? '정신과 의사' : '심리상담사'}
-                            color={prof.type === 'psychiatrist' ? 'primary' : 'secondary'}
-                            size="small"
-                            sx={{ mb: 1 }}
-                          />
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Rating value={prof.rating} precision={0.1} size="small" readOnly />
-                            <Typography variant="body2" color="text.secondary">
-                              ({prof.reviewCount})
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Box>
-
-                      {/* Details */}
-                      <Box sx={{ flex: 1 }}>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                          {prof.specialty.map((spec, idx) => (
-                            <Chip key={idx} label={spec} variant="outlined" size="small" />
-                          ))}
-                        </Box>
-                        
-                        <Typography variant="body2" sx={{ mb: 2 }}>
-                          {prof.description}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        {filteredProfessionals.length === 0 ? (
+          <Card>
+            <CardContent sx={{ textAlign: 'center', py: 6 }}>
+              <Typography variant="h6" color="text.secondary">
+                검색 결과가 없습니다.
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                다른 검색어를 시도해보세요.
+              </Typography>
+            </CardContent>
+          </Card>
+        ) : (
+          filteredProfessionals.map((prof, index) => (
+            <Card key={prof.id}>
+              <CardContent>
+                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
+                  {/* Avatar and Basic Info */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 200 }}>
+                    <Box
+                      sx={{
+                        width: 80,
+                        height: 80,
+                        bgcolor: prof.type === 'psychiatrist' ? 'primary.main' : 'secondary.main',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '2rem',
+                        borderRadius: '50%',
+                      }}
+                    >
+                      {prof.type === 'psychiatrist' ? <EmailIcon /> : <EmailIcon />}
+                    </Box>
+                    <Box>
+                      <Typography variant="h6" fontWeight={600} sx={{ mb: 1 }}>
+                        {prof.name}
+                      </Typography>
+                      <Chip
+                        label={prof.type === 'psychiatrist' ? '정신과 의사' : '심리상담사'}
+                        color={prof.type === 'psychiatrist' ? 'primary' : 'secondary'}
+                        size="small"
+                        sx={{ mb: 1 }}
+                      />
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Rating value={prof.rating} precision={0.1} size="small" readOnly />
+                        <Typography variant="body2" color="text.secondary">
+                          ({prof.reviewCount})
                         </Typography>
-
-                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 2 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <LocationIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
-                            <Typography variant="body2">{prof.location}</Typography>
-                          </Box>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <PhoneIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
-                            <Typography variant="body2">{prof.phone}</Typography>
-                          </Box>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <TimeIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
-                            <Typography variant="body2">{prof.availability}</Typography>
-                          </Box>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <MoneyIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
-                            <Typography variant="body2">{prof.price}</Typography>
-                          </Box>
-                        </Box>
-                      </Box>
-
-                      {/* Actions */}
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 120 }}>
-                        <Button variant="contained" fullWidth>
-                          예약하기
-                        </Button>
-                        {prof.website && (
-                          <Button
-                            variant="outlined"
-                            startIcon={<LanguageIcon />}
-                            fullWidth
-                            onClick={() => window.open(`https://${prof.website}`, '_blank')}
-                          >
-                            웹사이트
-                          </Button>
-                        )}
                       </Box>
                     </Box>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))
-          )}
-        </Box>
-      </motion.div>
+                  </Box>
+
+                  {/* Details */}
+                  <Box sx={{ flex: 1 }}>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                      {prof.specialty.map((spec, idx) => (
+                        <Chip key={idx} label={spec} variant="outlined" size="small" />
+                      ))}
+                    </Box>
+                    
+                    <Typography variant="body2" sx={{ mb: 2 }}>
+                      {prof.description}
+                    </Typography>
+
+                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <LocationIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
+                        <Typography variant="body2">{prof.location}</Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <PhoneIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
+                        <Typography variant="body2">{prof.phone}</Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <EmailIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
+                        <Typography variant="body2">{prof.availability}</Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <EmailIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
+                        <Typography variant="body2">{prof.price}</Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+
+                  {/* Actions */}
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 120 }}>
+                    <Button variant="contained" fullWidth>
+                      예약하기
+                    </Button>
+                    {prof.website && (
+                      <Button
+                        variant="outlined"
+                        startIcon={<EmailIcon />}
+                        fullWidth
+                        onClick={() => window.open(`https://${prof.website}`, '_blank')}
+                      >
+                        웹사이트
+                      </Button>
+                    )}
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </Box>
     </Container>
   );
 };

@@ -1,35 +1,19 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  Container,
   Box,
-  Paper,
   TextField,
   Button,
   Typography,
-  Avatar,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemAvatar,
-  Divider,
-  Chip,
-  Card,
-  CardContent,
-  IconButton,
-  useTheme,
-  Alert,
+  Paper,
+  Container,
   Snackbar,
+  Alert,
+  CircularProgress,
+  useTheme
 } from '@mui/material';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Send as SendIcon,
-  Psychology as PsychologyIcon,
-  Person as PersonIcon,
-  Refresh as RefreshIcon,
-  Save as SaveIcon,
-  Warning as WarningIcon,
-} from '@mui/icons-material';
-import apiService, { ChatMessage, ChatResponse } from '../utils/api';
+import { Send as SendIcon } from '@mui/icons-material';
+import { motion } from 'framer-motion';
+import { apiService } from '../utils/api';
 
 interface Message {
   id: string;
@@ -47,10 +31,10 @@ const Chat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [sessionId, setSessionId] = useState<string>('');
-  const [error, setError] = useState<string>('');
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [riskMessage, setRiskMessage] = useState<string | null>(null);
   const [showRiskAlert, setShowRiskAlert] = useState(false);
-  const [riskMessage, setRiskMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const theme = useTheme();
 
@@ -104,7 +88,7 @@ const Chat: React.FC = () => {
     setIsTyping(true);
 
     try {
-      const response: ChatResponse = await apiService.sendMessage(inputText, sessionId);
+      const response = await apiService.sendMessage(inputText, sessionId);
       
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -157,7 +141,6 @@ const Chat: React.FC = () => {
       >
         <Alert 
           severity="warning" 
-          icon={<WarningIcon />}
           onClose={() => setShowRiskAlert(false)}
           sx={{ width: '100%' }}
         >
@@ -167,13 +150,10 @@ const Chat: React.FC = () => {
 
       <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
         {/* Header */}
-        <Card sx={{ mb: 2 }}>
-          <CardContent sx={{ py: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box sx={{ mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
-                  <PsychologyIcon />
-                </Avatar>
                 <Box>
                   <Typography variant="h6" fontWeight={600}>
                     AI 상담사
@@ -184,16 +164,13 @@ const Chat: React.FC = () => {
                 </Box>
               </Box>
               <Box>
-                <IconButton onClick={startNewChat} color="primary" title="새 상담 시작" disabled={isTyping}>
-                  <RefreshIcon />
-                </IconButton>
-                <IconButton color="primary" title="대화 저장">
-                  <SaveIcon />
-                </IconButton>
+                <Button onClick={startNewChat} color="primary" title="새 상담 시작" disabled={isTyping}>
+                  <CircularProgress size={20} color="inherit" />
+                </Button>
               </Box>
             </Box>
-          </CardContent>
-        </Card>
+          </Box>
+        </Box>
 
         {/* Messages */}
         <Paper
@@ -215,70 +192,72 @@ const Chat: React.FC = () => {
               gap: 2,
             }}
           >
-            <AnimatePresence>
-              {messages.map((message) => (
-                <motion.div
-                  key={message.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
+            {messages.map((message) => (
+              <motion.div
+                key={message.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: message.sender === 'user' ? 'flex-end' : 'flex-start',
+                    mb: 2,
+                  }}
                 >
                   <Box
                     sx={{
+                      maxWidth: '70%',
                       display: 'flex',
-                      justifyContent: message.sender === 'user' ? 'flex-end' : 'flex-start',
-                      mb: 2,
+                      flexDirection: message.sender === 'user' ? 'row-reverse' : 'row',
+                      alignItems: 'flex-start',
+                      gap: 1,
                     }}
                   >
                     <Box
                       sx={{
-                        maxWidth: '70%',
+                        bgcolor: message.sender === 'user' ? 'secondary.main' : 'primary.main',
+                        width: 32,
+                        height: 32,
+                        borderRadius: '50%',
                         display: 'flex',
-                        flexDirection: message.sender === 'user' ? 'row-reverse' : 'row',
-                        alignItems: 'flex-start',
-                        gap: 1,
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
                     >
-                      <Avatar
+                      {message.sender === 'user' ? 'U' : 'AI'}
+                    </Box>
+                    <Box>
+                      <Paper
                         sx={{
-                          bgcolor: message.sender === 'user' ? 'secondary.main' : 'primary.main',
-                          width: 32,
-                          height: 32,
+                          p: 2,
+                          backgroundColor: message.sender === 'user' ? 'primary.main' : 'background.paper',
+                          color: message.sender === 'user' ? 'white' : 'text.primary',
+                          borderRadius: 2,
+                          boxShadow: 1,
                         }}
                       >
-                        {message.sender === 'user' ? <PersonIcon /> : <PsychologyIcon />}
-                      </Avatar>
-                      <Box>
-                        <Paper
-                          sx={{
-                            p: 2,
-                            backgroundColor: message.sender === 'user' ? 'primary.main' : 'background.paper',
-                            color: message.sender === 'user' ? 'white' : 'text.primary',
-                            borderRadius: 2,
-                            boxShadow: 1,
-                          }}
-                        >
-                          <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-                            {message.text}
-                          </Typography>
-                        </Paper>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{ mt: 0.5, display: 'block' }}
-                        >
-                          {message.timestamp.toLocaleTimeString('ko-KR', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
+                        <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+                          {message.text}
                         </Typography>
-                      </Box>
+                      </Paper>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ mt: 0.5, display: 'block' }}
+                      >
+                        {message.timestamp.toLocaleTimeString('ko-KR', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </Typography>
                     </Box>
                   </Box>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+                </Box>
+              </motion.div>
+            ))}
 
             {/* Typing Indicator */}
             {isTyping && (
@@ -289,9 +268,9 @@ const Chat: React.FC = () => {
               >
                 <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 2 }}>
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                    <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32 }}>
-                      <PsychologyIcon />
-                    </Avatar>
+                    <Box sx={{ bgcolor: 'primary.main', width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      AI
+                    </Box>
                     <Paper
                       sx={{
                         p: 2,
