@@ -66,14 +66,7 @@ const Chat: React.FC = () => {
     scrollToBottom();
   }, [messages]);
 
-  // Initialize chat with welcome questions
-  useEffect(() => {
-    if (messages.length === 0) {
-      setMessages(initialQuestions());
-    }
-  }, [messages.length, initialQuestions]);
-
-  const startNewChat = async () => {
+  const startNewChat = useCallback(async () => {
     try {
       setIsTyping(true);
       const response = await apiService.startConversation();
@@ -93,7 +86,16 @@ const Chat: React.FC = () => {
     } finally {
       setIsTyping(false);
     }
-  };
+  }, [initialQuestions]);
+
+  // Initialize chat with welcome questions
+  useEffect(() => {
+    if (messages.length === 0) {
+      setMessages(initialQuestions());
+      // Start a conversation session immediately
+      startNewChat();
+    }
+  }, [messages.length, initialQuestions, startNewChat]);
 
   const handleSendMessage = async () => {
     if (!inputText.trim() || !sessionId) return;
