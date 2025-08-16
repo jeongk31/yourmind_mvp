@@ -4,15 +4,13 @@ import {
   Typography,
   Button,
   Container,
-  Chip,
-  useTheme
+  Chip
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
-  const theme = useTheme();
 
   const features = [
     {

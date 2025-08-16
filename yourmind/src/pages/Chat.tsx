@@ -8,8 +8,7 @@ import {
   Container,
   Snackbar,
   Alert,
-  CircularProgress,
-  useTheme
+  CircularProgress
 } from '@mui/material';
 import { Send as SendIcon } from '@mui/icons-material';
 import { motion } from 'framer-motion';
@@ -36,7 +35,6 @@ const Chat: React.FC = () => {
   const [riskMessage, setRiskMessage] = useState<string | null>(null);
   const [showRiskAlert, setShowRiskAlert] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const theme = useTheme();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

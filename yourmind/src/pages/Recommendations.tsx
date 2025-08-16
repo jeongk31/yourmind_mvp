@@ -11,8 +11,7 @@ import {
   CardContent,
   Rating,
   Button,
-  Chip,
-  useTheme
+  Chip
 } from '@mui/material';
 import { Search as SearchIcon, LocationOn as LocationIcon, Phone as PhoneIcon, Email as EmailIcon } from '@mui/icons-material';
 
@@ -36,7 +35,6 @@ const Recommendations: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
-  const theme = useTheme();
 
   const professionals: Professional[] = [
     {
