@@ -31,6 +31,7 @@ import {
   Delete as DeleteIcon,
   Close as CloseIcon,
   Chat as ChatIcon,
+  Summarize as SummarizeIcon,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
@@ -55,7 +56,7 @@ const Chat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [sessionId, setSessionId] = useState<string>('');
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [riskMessage, setRiskMessage] = useState<string | null>(null);
   const [showRiskAlert, setShowRiskAlert] = useState(false);
@@ -66,6 +67,9 @@ const Chat: React.FC = () => {
   const [editingSession, setEditingSession] = useState<ChatSession | null>(null);
   const [newTitle, setNewTitle] = useState('');
   const [loading, setLoading] = useState(false);
+  const [summary, setSummary] = useState<string | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -305,7 +309,7 @@ const Chat: React.FC = () => {
       }
 
       // Send to backend for AI response
-      const response = await apiService.sendMessage(inputText, currentSessionId);
+      const response = await apiService.sendMessage(inputText, currentSessionId || '');
       
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -354,21 +358,65 @@ const Chat: React.FC = () => {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const handleGenerateSummary = async () => {
+    if (messages.length === 0) return;
+    
+    setSummaryLoading(true);
+    setSummaryDialogOpen(true);
+    
+    try {
+      // Create a summary prompt
+      const conversationText = messages
+        .map(msg => `${msg.sender === 'user' ? '사용자' : 'AI'}: ${msg.text}`)
+        .join('\n');
+      
+      const summaryPrompt = `다음 대화를 요약해주세요. 요약 후에 다음 항목들을 점수로 평가해주세요:
 
-    if (diffDays === 1) {
-      return '오늘';
-    } else if (diffDays === 2) {
-      return '어제';
-    } else if (diffDays <= 7) {
-      return `${diffDays - 1}일 전`;
-    } else {
-      return date.toLocaleDateString('ko-KR');
+대화 내용:
+${conversationText}
+
+요약과 함께 다음 항목들을 1-10점으로 평가해주세요:
+- 스트레스 수준 (1=매우 낮음, 10=매우 높음)
+- 우울감 수준 (1=매우 낮음, 10=매우 높음)  
+- 불안감 수준 (1=매우 낮음, 10=매우 높음)
+- 전반적인 심리 상태 (1=매우 좋음, 10=매우 나쁨)
+
+형식:
+## 대화 요약
+[요약 내용]
+
+## 심리 상태 점수
+- 스트레스 수준: X/10
+- 우울감 수준: X/10
+- 불안감 수준: X/10
+- 전반적인 심리 상태: X/10
+
+## 권장사항
+[상황에 맞는 조언]`;
+
+      // Send to backend for summary
+      const response = await apiService.sendMessage(summaryPrompt, sessionId || '');
+      
+      setSummary(response.response);
+    } catch (error) {
+      console.error('Failed to generate summary:', error);
+      setSummary('요약을 생성할 수 없습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setSummaryLoading(false);
     }
+  };
+
+  // Simple date formatting function
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   return (
@@ -404,6 +452,17 @@ const Chat: React.FC = () => {
             sx={{ mb: 2 }}
           >
             새 채팅
+          </Button>
+
+          <Button
+            fullWidth
+            variant="outlined"
+            startIcon={<SummarizeIcon />}
+            onClick={handleGenerateSummary}
+            disabled={isTyping || messages.length === 0}
+            sx={{ mb: 2 }}
+          >
+            채팅 요약
           </Button>
 
           {loading ? (
@@ -465,7 +524,7 @@ const Chat: React.FC = () => {
                             color: currentSession?.id === session.id ? 'rgba(255,255,255,0.7)' : 'text.secondary'
                           }}
                         >
-                          {formatDate(session.created_at)}
+                          {formatDate(session.created_at || '')}
                         </Typography>
                       }
                     />
@@ -551,33 +610,42 @@ const Chat: React.FC = () => {
 
           <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             {/* Header */}
-            <Box sx={{ mb: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <IconButton
-                    onClick={() => setSidebarOpen(true)}
-                    sx={{ color: 'text.secondary' }}
-                  >
-                    <MenuIcon />
-                  </IconButton>
-                  <Box>
-                    <Typography variant="h6" fontWeight={600}>
-                      AI 상담사
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {currentSession ? currentSession.title : '새로운 상담'}
-                    </Typography>
-                  </Box>
-                </Box>
-                <Button
-                  onClick={startNewChat}
-                  variant="outlined"
-                  startIcon={<AddIcon />}
-                  disabled={isTyping}
-                >
-                  새 채팅
-                </Button>
+            <Box sx={{ 
+              p: 2, 
+              borderBottom: 1, 
+              borderColor: 'divider',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2
+            }}>
+              <IconButton onClick={() => setSidebarOpen(true)}>
+                <MenuIcon />
+              </IconButton>
+              
+              <Button
+                variant="outlined"
+                startIcon={<SummarizeIcon />}
+                onClick={handleGenerateSummary}
+                disabled={isTyping || messages.length === 0}
+                size="small"
+              >
+                채팅 요약
+              </Button>
+              
+              <Box sx={{ flex: 1, textAlign: 'center' }}>
+                <Typography variant="h6" fontWeight={600}>
+                  AI 상담사
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {currentSession ? currentSession.title : '새로운 상담'}
+                </Typography>
               </Box>
+              
+              <Box sx={{ flex: 1 }} />
+              
+              <IconButton onClick={startNewChat} disabled={isTyping}>
+                <AddIcon />
+              </IconButton>
             </Box>
 
             {/* Messages */}
@@ -798,6 +866,59 @@ const Chat: React.FC = () => {
           <Button onClick={() => setEditDialogOpen(false)}>취소</Button>
           <Button onClick={handleEditTitle} variant="contained">
             저장
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Summary Dialog */}
+      <Dialog
+        open={summaryDialogOpen}
+        onClose={() => setSummaryDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <SummarizeIcon color="primary" />
+            <Typography variant="h6">채팅 요약</Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {summaryLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <Box sx={{ mt: 2 }}>
+              {summary && (
+                <Typography
+                  component="div"
+                  sx={{
+                    whiteSpace: 'pre-wrap',
+                    lineHeight: 1.6,
+                    '& h2': {
+                      color: 'primary.main',
+                      fontWeight: 600,
+                      mt: 3,
+                      mb: 1,
+                    },
+                    '& ul': {
+                      pl: 2,
+                    },
+                    '& li': {
+                      mb: 0.5,
+                    },
+                  }}
+                >
+                  {summary}
+                </Typography>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSummaryDialogOpen(false)}>
+            닫기
           </Button>
         </DialogActions>
       </Dialog>
