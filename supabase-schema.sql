@@ -1,6 +1,3 @@
--- Enable Row Level Security
-ALTER DATABASE postgres SET "app.jwt_secret" TO 'your-jwt-secret-here';
-
 -- Create chat_sessions table
 CREATE TABLE IF NOT EXISTS chat_sessions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,

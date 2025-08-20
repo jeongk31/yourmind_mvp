@@ -32,7 +32,7 @@ export interface ChatMessage {
   sender: 'user' | 'ai';
   timestamp: string;
   risk_level?: {
-    level: 'low' | 'moderate' | 'high';
+    level: 'low' | 'moderate' | 'high' | 'unknown';
     requiresImmediateAttention: boolean;
     message: string;
   };

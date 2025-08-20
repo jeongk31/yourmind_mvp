@@ -11,7 +11,7 @@ export interface SaveMessageData {
   content: string;
   sender: 'user' | 'ai';
   riskLevel?: {
-    level: 'low' | 'moderate' | 'high';
+    level: 'low' | 'moderate' | 'high' | 'unknown';
     requiresImmediateAttention: boolean;
     message: string;
   };
