@@ -375,34 +375,68 @@ const Chat: React.FC = () => {
 대화 내용:
 ${conversationText}
 
-요약과 함께 다음 항목들을 1-10점으로 평가해주세요:
-- 스트레스 수준 (1=매우 낮음, 10=매우 높음)
-- 우울감 수준 (1=매우 낮음, 10=매우 높음)  
-- 불안감 수준 (1=매우 낮음, 10=매우 높음)
-- 전반적인 심리 상태 (1=매우 좋음, 10=매우 나쁨)
+다음 형식으로만 응답해주세요 (마크다운이나 특수문자 사용하지 마세요):
 
-형식:
-## 대화 요약
-[요약 내용]
+요약: [대화 내용 요약]
 
-## 심리 상태 점수
-- 스트레스 수준: X/10
-- 우울감 수준: X/10
-- 불안감 수준: X/10
-- 전반적인 심리 상태: X/10
+스트레스수준: [1-10점]
+우울감수준: [1-10점]
+불안감수준: [1-10점]
+전반적심리상태: [1-10점]
 
-## 권장사항
-[상황에 맞는 조언]`;
+권장사항: [상황에 맞는 조언]`;
 
       // Send to backend for summary
       const response = await apiService.sendMessage(summaryPrompt, sessionId || '');
       
-      setSummary(response.response);
+      // Parse the response and format it properly
+      const formattedSummary = formatSummaryResponse(response.response);
+      setSummary(formattedSummary);
     } catch (error) {
       console.error('Failed to generate summary:', error);
       setSummary('요약을 생성할 수 없습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setSummaryLoading(false);
+    }
+  };
+
+  const formatSummaryResponse = (response: string): string => {
+    try {
+      // Extract scores using regex
+      const stressMatch = response.match(/스트레스수준:\s*(\d+)/);
+      const depressionMatch = response.match(/우울감수준:\s*(\d+)/);
+      const anxietyMatch = response.match(/불안감수준:\s*(\d+)/);
+      const overallMatch = response.match(/전반적심리상태:\s*(\d+)/);
+      
+      // Extract summary and recommendations
+      const summaryMatch = response.match(/요약:\s*([\s\S]*?)(?=\n스트레스수준:|$)/);
+      const recommendationMatch = response.match(/권장사항:\s*([\s\S]*?)$/);
+      
+      const stress = stressMatch ? parseInt(stressMatch[1]) : 5;
+      const depression = depressionMatch ? parseInt(depressionMatch[1]) : 5;
+      const anxiety = anxietyMatch ? parseInt(anxietyMatch[1]) : 5;
+      const overall = overallMatch ? parseInt(overallMatch[1]) : 5;
+      const summary = summaryMatch ? summaryMatch[1].trim() : '요약을 생성할 수 없습니다.';
+      const recommendation = recommendationMatch ? recommendationMatch[1].trim() : '권장사항을 생성할 수 없습니다.';
+      
+      // Create formatted summary
+      return `대화 요약
+
+${summary}
+
+심리 상태 점수
+
+스트레스 수준: ${stress}/10
+우울감 수준: ${depression}/10
+불안감 수준: ${anxiety}/10
+전반적인 심리 상태: ${overall}/10
+
+권장사항
+
+${recommendation}`;
+    } catch (error) {
+      console.error('Error formatting summary:', error);
+      return response; // Return original response if parsing fails
     }
   };
 
@@ -896,17 +930,20 @@ ${conversationText}
                   sx={{
                     whiteSpace: 'pre-wrap',
                     lineHeight: 1.6,
-                    '& h2': {
+                    '& .summary-title': {
                       color: 'primary.main',
                       fontWeight: 600,
+                      fontSize: '1.2rem',
                       mt: 3,
                       mb: 1,
                     },
-                    '& ul': {
-                      pl: 2,
+                    '& .score-section': {
+                      mt: 2,
+                      mb: 1,
                     },
-                    '& li': {
+                    '& .score-item': {
                       mb: 0.5,
+                      pl: 1,
                     },
                   }}
                 >
