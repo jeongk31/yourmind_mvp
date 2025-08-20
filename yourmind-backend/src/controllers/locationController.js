@@ -13,6 +13,18 @@ const getAddressFromCoords = async (req, res) => {
       return res.status(400).json({ error: 'Latitude and longitude are required' });
     }
 
+    // Check if API keys are properly configured
+    if (!NAVER_CLIENT_ID || !NAVER_CLIENT_SECRET || 
+        NAVER_CLIENT_ID === 'your_naver_client_id_here' || 
+        NAVER_CLIENT_SECRET === 'your_naver_client_secret_here') {
+      console.log('Naver Maps API keys not configured, using mock data');
+      // Return mock data for testing
+      return res.json({ 
+        address: '서울특별시 강남구 역삼동',
+        mock: true 
+      });
+    }
+
     const response = await axios.get(
       `https://naveropenapi.apigw.ntruss.com/map-reversegeocode/v2/gc?coords=${lng},${lat}&orders=legalcode&output=json`,
       {
@@ -34,6 +46,16 @@ const getAddressFromCoords = async (req, res) => {
     }
   } catch (error) {
     console.error('Error getting address from coordinates:', error);
+    
+    // Return mock data if API fails
+    if (error.response?.status === 401) {
+      console.log('Naver Maps API authentication failed, using mock data');
+      return res.json({ 
+        address: '서울특별시 강남구 역삼동',
+        mock: true 
+      });
+    }
+    
     res.status(500).json({ error: 'Failed to get address from coordinates' });
   }
 };
@@ -81,6 +103,54 @@ const searchNearbyFacilities = async (req, res) => {
 
     if (!lat || !lng) {
       return res.status(400).json({ error: 'Latitude and longitude are required' });
+    }
+
+    // Check if API keys are properly configured
+    if (!NAVER_CLIENT_ID || !NAVER_CLIENT_SECRET || 
+        NAVER_CLIENT_ID === 'your_naver_client_id_here' || 
+        NAVER_CLIENT_SECRET === 'your_naver_client_secret_here') {
+      console.log('Naver Maps API keys not configured, using mock data');
+      // Return mock data for testing
+      return res.json({
+        facilities: [
+          {
+            id: 'mock_1',
+            name: '강남정신건강의학과',
+            type: 'psychiatrist',
+            address: '서울특별시 강남구 역삼동 123-45',
+            roadAddress: '서울특별시 강남구 테헤란로 123',
+            phone: '02-1234-5678',
+            category: '정신건강의학과',
+            distance: '500',
+            coordinates: { lat: 37.5665, lng: 126.9780 }
+          },
+          {
+            id: 'mock_2',
+            name: '역삼심리상담센터',
+            type: 'counselor',
+            address: '서울특별시 강남구 역삼동 234-56',
+            roadAddress: '서울특별시 강남구 강남대로 456',
+            phone: '02-2345-6789',
+            category: '심리상담',
+            distance: '800',
+            coordinates: { lat: 37.5670, lng: 126.9785 }
+          },
+          {
+            id: 'mock_3',
+            name: '테헤란정신과',
+            type: 'psychiatrist',
+            address: '서울특별시 강남구 역삼동 345-67',
+            roadAddress: '서울특별시 강남구 테헤란로 789',
+            phone: '02-3456-7890',
+            category: '정신건강의학과',
+            distance: '1200',
+            coordinates: { lat: 37.5660, lng: 126.9775 }
+          }
+        ],
+        totalCount: 3,
+        searchLocation: { lat: parseFloat(lat), lng: parseFloat(lng) },
+        mock: true
+      });
     }
 
     // Search for 정신과 (psychiatry clinics)
@@ -163,6 +233,52 @@ const searchNearbyFacilities = async (req, res) => {
 
   } catch (error) {
     console.error('Error searching nearby facilities:', error);
+    
+    // Return mock data if API fails
+    if (error.response?.status === 401) {
+      console.log('Naver Maps API authentication failed, using mock data');
+      return res.json({
+        facilities: [
+          {
+            id: 'mock_1',
+            name: '강남정신건강의학과',
+            type: 'psychiatrist',
+            address: '서울특별시 강남구 역삼동 123-45',
+            roadAddress: '서울특별시 강남구 테헤란로 123',
+            phone: '02-1234-5678',
+            category: '정신건강의학과',
+            distance: '500',
+            coordinates: { lat: 37.5665, lng: 126.9780 }
+          },
+          {
+            id: 'mock_2',
+            name: '역삼심리상담센터',
+            type: 'counselor',
+            address: '서울특별시 강남구 역삼동 234-56',
+            roadAddress: '서울특별시 강남구 강남대로 456',
+            phone: '02-2345-6789',
+            category: '심리상담',
+            distance: '800',
+            coordinates: { lat: 37.5670, lng: 126.9785 }
+          },
+          {
+            id: 'mock_3',
+            name: '테헤란정신과',
+            type: 'psychiatrist',
+            address: '서울특별시 강남구 역삼동 345-67',
+            roadAddress: '서울특별시 강남구 테헤란로 789',
+            phone: '02-3456-7890',
+            category: '정신건강의학과',
+            distance: '1200',
+            coordinates: { lat: 37.5660, lng: 126.9775 }
+          }
+        ],
+        totalCount: 3,
+        searchLocation: { lat: parseFloat(req.query.lat), lng: parseFloat(req.query.lng) },
+        mock: true
+      });
+    }
+    
     res.status(500).json({ error: 'Failed to search nearby facilities' });
   }
 };

@@ -1,5 +1,5 @@
-// API configuration - Updated for Render deployment
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://yourmind-mvp.onrender.com/api';
+// API configuration - Updated for local testing
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
 
 // Debug logging
 console.log('API_BASE_URL:', API_BASE_URL);
