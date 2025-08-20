@@ -39,6 +39,7 @@ app.post('/api/chat/send', chatController.sendMessage);
 app.post('/api/chat/start', chatController.startConversation);
 app.get('/api/location/address', locationController.getAddressFromCoords);
 app.get('/api/location/search', locationController.searchLocations);
+app.get('/api/location/nearby-facilities', locationController.searchNearbyFacilities);
 
 // Health check endpoint for Render
 app.get('/health', (req, res) => {

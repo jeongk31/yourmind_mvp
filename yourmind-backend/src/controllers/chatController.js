@@ -42,7 +42,7 @@ const chatController = {
 
       // Call OpenAI API
       const completion = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',
         messages: conversation,
         max_tokens: 1000,
         temperature: 0.7,
