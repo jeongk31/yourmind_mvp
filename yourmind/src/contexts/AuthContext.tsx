@@ -5,8 +5,8 @@ import { UserService } from '../services/userService';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signUp: (name: string, email: string, avatarColor: string) => Promise<{ error: any }>;
-  signIn: (email: string) => Promise<{ error: any }>;
+  signUp: (name: string, email: string, password: string, avatarColor: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   refreshUserProfile: () => Promise<void>;
 }
@@ -48,7 +48,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const signUp = async (name: string, email: string, avatarColor: string) => {
+  const signUp = async (name: string, email: string, password: string, avatarColor: string) => {
     try {
       // Check if email already exists
       const { exists, error: checkError } = await UserService.checkEmailExists(email);
@@ -65,6 +65,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const { data: profile, error } = await UserService.createProfile({
         name,
         email,
+        password,
         avatarColor,
       });
 
@@ -94,17 +95,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const signIn = async (email: string) => {
+  const signIn = async (email: string, password: string) => {
     try {
-      // Get user profile by email
-      const { data: profile, error } = await UserService.getProfileByEmail(email);
+      // Verify user login with password
+      const { data: profile, error } = await UserService.verifyLogin(email, password);
 
       if (error) {
-        return { error: { message: '로그인 중 오류가 발생했습니다.' } };
+        return { error };
       }
 
       if (!profile) {
-        return { error: { message: '등록되지 않은 이메일입니다.' } };
+        return { error: { message: '로그인 정보가 올바르지 않습니다.' } };
       }
 
       // Convert UserProfile to User format

@@ -16,6 +16,8 @@ import AvatarColorPicker from './AvatarColorPicker';
 
 const SignUp: React.FC = () => {
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
   const [avatarColor, setAvatarColor] = useState('#3B82F6');
   const [error, setError] = useState('');
@@ -30,8 +32,18 @@ const SignUp: React.FC = () => {
     setError('');
 
     // Validation
-    if (!email || !name.trim()) {
+    if (!email || !password || !confirmPassword || !name.trim()) {
       setError('모든 필드를 입력해주세요.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('비밀번호가 일치하지 않습니다.');
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('비밀번호는 최소 6자 이상이어야 합니다.');
       return;
     }
 
@@ -43,7 +55,7 @@ const SignUp: React.FC = () => {
     setLoading(true);
 
     try {
-      const { error: signUpError } = await signUp(name.trim(), email, avatarColor);
+      const { error: signUpError } = await signUp(name.trim(), email, password, avatarColor);
       
       if (signUpError) {
         setError(signUpError.message);
@@ -128,6 +140,30 @@ const SignUp: React.FC = () => {
               required
               disabled={loading}
               placeholder="example@email.com"
+            />
+
+            <TextField
+              fullWidth
+              label="비밀번호"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              margin="normal"
+              required
+              disabled={loading}
+              placeholder="비밀번호"
+            />
+
+            <TextField
+              fullWidth
+              label="비밀번호 확인"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              margin="normal"
+              required
+              disabled={loading}
+              placeholder="비밀번호 확인"
             />
 
             <Box sx={{ mt: 3, mb: 3 }}>

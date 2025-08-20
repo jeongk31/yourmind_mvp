@@ -14,6 +14,7 @@ export interface UserProfile {
   id: string;
   name: string;
   email: string;
+  password_hash: string;
   avatar_color: string;
   created_at: string;
   updated_at: string;

@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 
 const SignIn: React.FC = () => {
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -26,15 +27,15 @@ const SignIn: React.FC = () => {
     setError('');
 
     // Validation
-    if (!email) {
-      setError('이메일을 입력해주세요.');
+    if (!email || !password) {
+      setError('이메일과 비밀번호를 입력해주세요.');
       return;
     }
 
     setLoading(true);
 
     try {
-      const { error: signInError } = await signIn(email);
+      const { error: signInError } = await signIn(email, password);
       
       if (signInError) {
         setError(signInError.message);
@@ -99,6 +100,18 @@ const SignIn: React.FC = () => {
               required
               disabled={loading}
               placeholder="example@email.com"
+            />
+
+            <TextField
+              fullWidth
+              label="비밀번호"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              margin="normal"
+              required
+              disabled={loading}
+              placeholder="비밀번호"
             />
 
             <Button
