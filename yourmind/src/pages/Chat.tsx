@@ -419,9 +419,9 @@ const Chat: React.FC = () => {
                   sx={{
                     mb: 1,
                     borderRadius: 2,
-                    backgroundColor: currentSession?.id === session.id ? 'primary.main' : 'transparent',
+                    backgroundColor: currentSession?.id === session.id ? '#3B82F6' : 'transparent',
                     '&:hover': {
-                      backgroundColor: currentSession?.id === session.id ? 'primary.main' : 'action.hover',
+                      backgroundColor: currentSession?.id === session.id ? '#1D4ED8' : '#EFF6FF',
                     },
                   }}
                 >
@@ -432,7 +432,13 @@ const Chat: React.FC = () => {
                     <ListItemText
                       primary={
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Typography variant="body1" fontWeight={500}>
+                          <Typography 
+                            variant="body1" 
+                            fontWeight={500}
+                            sx={{
+                              color: currentSession?.id === session.id ? 'white' : 'text.primary'
+                            }}
+                          >
                             {session.title}
                           </Typography>
                           {currentSession?.id === session.id && (
@@ -441,12 +447,24 @@ const Chat: React.FC = () => {
                               size="small"
                               color="primary"
                               variant="outlined"
+                              sx={{
+                                color: 'white',
+                                borderColor: 'white',
+                                '& .MuiChip-label': {
+                                  color: 'white'
+                                }
+                              }}
                             />
                           )}
                         </Box>
                       }
                       secondary={
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography 
+                          variant="caption" 
+                          sx={{
+                            color: currentSession?.id === session.id ? 'rgba(255,255,255,0.7)' : 'text.secondary'
+                          }}
+                        >
                           {formatDate(session.created_at)}
                         </Typography>
                       }
@@ -460,7 +478,12 @@ const Chat: React.FC = () => {
                           setNewTitle(session.title);
                           setEditDialogOpen(true);
                         }}
-                        sx={{ color: 'text.secondary' }}
+                        sx={{ 
+                          color: currentSession?.id === session.id ? 'rgba(255,255,255,0.8)' : 'text.secondary',
+                          '&:hover': {
+                            color: currentSession?.id === session.id ? 'white' : 'primary.main'
+                          }
+                        }}
                       >
                         <EditIcon fontSize="small" />
                       </IconButton>
@@ -471,8 +494,10 @@ const Chat: React.FC = () => {
                           handleDeleteSession(session);
                         }}
                         sx={{ 
-                          color: 'text.secondary',
-                          '&:hover': { color: 'error.main' }
+                          color: currentSession?.id === session.id ? 'rgba(255,255,255,0.8)' : 'text.secondary',
+                          '&:hover': { 
+                            color: currentSession?.id === session.id ? 'white' : 'error.main' 
+                          }
                         }}
                       >
                         <DeleteIcon fontSize="small" />

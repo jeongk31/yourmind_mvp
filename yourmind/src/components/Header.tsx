@@ -111,10 +111,10 @@ const Header: React.FC = () => {
                 onClick={() => navigate(item.path)}
                 sx={{
                   color: location.pathname === item.path ? 'white' : 'text.secondary',
-                  backgroundColor: location.pathname === item.path ? 'primary.main' : 'transparent',
+                  backgroundColor: location.pathname === item.path ? '#3B82F6' : 'transparent',
                   '&:hover': {
-                    backgroundColor: location.pathname === item.path ? 'primary.dark' : 'primary.light',
-                    color: location.pathname === item.path ? 'white' : 'primary.main',
+                    backgroundColor: location.pathname === item.path ? '#1D4ED8' : '#EFF6FF',
+                    color: location.pathname === item.path ? 'white' : '#3B82F6',
                   },
                   borderRadius: 2,
                   px: 2,
