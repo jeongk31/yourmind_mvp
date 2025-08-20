@@ -32,6 +32,7 @@ import {
   Close as CloseIcon,
   Chat as ChatIcon,
   Summarize as SummarizeIcon,
+  Download as DownloadIcon,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
@@ -419,25 +420,161 @@ ${conversationText}
       const summary = summaryMatch ? summaryMatch[1].trim() : '요약을 생성할 수 없습니다.';
       const recommendation = recommendationMatch ? recommendationMatch[1].trim() : '권장사항을 생성할 수 없습니다.';
       
-      // Create formatted summary
-      return `대화 요약
+      // Create formatted summary with bold headers
+      return `**대화 요약**
 
 ${summary}
 
-심리 상태 점수
+**심리 상태 점수**
 
 스트레스 수준: ${stress}/10
 우울감 수준: ${depression}/10
 불안감 수준: ${anxiety}/10
 전반적인 심리 상태: ${overall}/10
 
-권장사항
+**권장사항**
 
 ${recommendation}`;
     } catch (error) {
       console.error('Error formatting summary:', error);
       return response; // Return original response if parsing fails
     }
+  };
+
+  const handleDownloadPDF = () => {
+    if (!summary) return;
+    
+    // Create a simple PDF-like download using browser print functionality
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>채팅 요약 - 유어마인드</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+              .header { text-align: center; margin-bottom: 30px; }
+              .section { margin-bottom: 25px; }
+              .section-title { font-weight: bold; font-size: 18px; color: #2563EB; margin-bottom: 10px; }
+              .score-item { margin-bottom: 15px; }
+              .score-bar { 
+                display: flex; 
+                align-items: center; 
+                gap: 10px; 
+                margin-bottom: 8px; 
+              }
+              .score-label { min-width: 120px; }
+              .score-bar-container { 
+                flex: 1; 
+                height: 20px; 
+                background: #f0f0f0; 
+                border-radius: 10px; 
+                overflow: hidden; 
+              }
+              .score-bar-fill { 
+                height: 100%; 
+                border-radius: 10px; 
+                transition: width 0.3s; 
+              }
+              .score-number { font-weight: bold; min-width: 30px; }
+              .stress { background: linear-gradient(90deg, #10B981, #34D399); }
+              .depression { background: linear-gradient(90deg, #F59E0B, #FBBF24); }
+              .anxiety { background: linear-gradient(90deg, #EF4444, #F87171); }
+              .overall { background: linear-gradient(90deg, #8B5CF6, #A78BFA); }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>채팅 요약</h1>
+              <p>유어마인드 AI 상담사</p>
+              <p>생성일: ${new Date().toLocaleDateString('ko-KR')}</p>
+            </div>
+            
+            <div class="section">
+              <div class="section-title">대화 요약</div>
+              <div>${summary.split('**대화 요약**')[1]?.split('**심리 상태 점수**')[0]?.trim() || '요약을 생성할 수 없습니다.'}</div>
+            </div>
+            
+            <div class="section">
+              <div class="section-title">심리 상태 점수</div>
+              ${generateScoreBarsHTML()}
+            </div>
+            
+            <div class="section">
+              <div class="section-title">권장사항</div>
+              <div>${summary.split('**권장사항**')[1]?.trim() || '권장사항을 생성할 수 없습니다.'}</div>
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  };
+
+  const generateScoreBarsHTML = () => {
+    const scores = extractScoresFromSummary(summary);
+    return `
+      <div class="score-item">
+        <div class="score-bar">
+          <div class="score-label">스트레스 수준</div>
+          <div class="score-bar-container">
+            <div class="score-bar-fill stress" style="width: ${scores.stress * 10}%"></div>
+          </div>
+          <div class="score-number">${scores.stress}/10</div>
+        </div>
+      </div>
+      <div class="score-item">
+        <div class="score-bar">
+          <div class="score-label">우울감 수준</div>
+          <div class="score-bar-container">
+            <div class="score-bar-fill depression" style="width: ${scores.depression * 10}%"></div>
+          </div>
+          <div class="score-number">${scores.depression}/10</div>
+        </div>
+      </div>
+      <div class="score-item">
+        <div class="score-bar">
+          <div class="score-label">불안감 수준</div>
+          <div class="score-bar-container">
+            <div class="score-bar-fill anxiety" style="width: ${scores.anxiety * 10}%"></div>
+          </div>
+          <div class="score-number">${scores.anxiety}/10</div>
+        </div>
+      </div>
+      <div class="score-item">
+        <div class="score-bar">
+          <div class="score-label">전반적인 심리 상태</div>
+          <div class="score-bar-container">
+            <div class="score-bar-fill overall" style="width: ${scores.overall * 10}%"></div>
+          </div>
+          <div class="score-number">${scores.overall}/10</div>
+        </div>
+      </div>
+    `;
+  };
+
+  const extractScoresFromSummary = (summaryText: string | null) => {
+    if (!summaryText) {
+      return {
+        stress: 5,
+        depression: 5,
+        anxiety: 5,
+        overall: 5,
+      };
+    }
+    
+    const stressMatch = summaryText.match(/스트레스 수준:\s*(\d+)/);
+    const depressionMatch = summaryText.match(/우울감 수준:\s*(\d+)/);
+    const anxietyMatch = summaryText.match(/불안감 수준:\s*(\d+)/);
+    const overallMatch = summaryText.match(/전반적인 심리 상태:\s*(\d+)/);
+    
+    return {
+      stress: stressMatch ? parseInt(stressMatch[1]) : 5,
+      depression: depressionMatch ? parseInt(depressionMatch[1]) : 5,
+      anxiety: anxietyMatch ? parseInt(anxietyMatch[1]) : 5,
+      overall: overallMatch ? parseInt(overallMatch[1]) : 5,
+    };
   };
 
   // Simple date formatting function
@@ -451,6 +588,130 @@ ${recommendation}`;
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const renderScoreBars = () => {
+    const scores = extractScoresFromSummary(summary);
+    
+    const getScoreColor = (score: number) => {
+      if (score <= 3) return '#10B981'; // Green for low
+      if (score <= 6) return '#F59E0B'; // Yellow for medium
+      return '#EF4444'; // Red for high
+    };
+
+    const getScoreLabel = (score: number) => {
+      if (score <= 3) return '낮음';
+      if (score <= 6) return '보통';
+      return '높음';
+    };
+
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {/* Stress Level */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography sx={{ minWidth: 120, fontSize: '0.9rem' }}>
+            스트레스 수준
+          </Typography>
+          <Box sx={{ flex: 1, height: 20, bgcolor: '#f0f0f0', borderRadius: 2, overflow: 'hidden' }}>
+            <Box
+              sx={{
+                height: '100%',
+                width: `${scores.stress * 10}%`,
+                bgcolor: getScoreColor(scores.stress),
+                borderRadius: 2,
+                transition: 'width 0.3s ease',
+              }}
+            />
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 60 }}>
+            <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+              {scores.stress}/10
+            </Typography>
+            <Typography sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
+              ({getScoreLabel(scores.stress)})
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Depression Level */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography sx={{ minWidth: 120, fontSize: '0.9rem' }}>
+            우울감 수준
+          </Typography>
+          <Box sx={{ flex: 1, height: 20, bgcolor: '#f0f0f0', borderRadius: 2, overflow: 'hidden' }}>
+            <Box
+              sx={{
+                height: '100%',
+                width: `${scores.depression * 10}%`,
+                bgcolor: getScoreColor(scores.depression),
+                borderRadius: 2,
+                transition: 'width 0.3s ease',
+              }}
+            />
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 60 }}>
+            <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+              {scores.depression}/10
+            </Typography>
+            <Typography sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
+              ({getScoreLabel(scores.depression)})
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Anxiety Level */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography sx={{ minWidth: 120, fontSize: '0.9rem' }}>
+            불안감 수준
+          </Typography>
+          <Box sx={{ flex: 1, height: 20, bgcolor: '#f0f0f0', borderRadius: 2, overflow: 'hidden' }}>
+            <Box
+              sx={{
+                height: '100%',
+                width: `${scores.anxiety * 10}%`,
+                bgcolor: getScoreColor(scores.anxiety),
+                borderRadius: 2,
+                transition: 'width 0.3s ease',
+              }}
+            />
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 60 }}>
+            <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+              {scores.anxiety}/10
+            </Typography>
+            <Typography sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
+              ({getScoreLabel(scores.anxiety)})
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Overall Mental State */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography sx={{ minWidth: 120, fontSize: '0.9rem' }}>
+            전반적인 심리 상태
+          </Typography>
+          <Box sx={{ flex: 1, height: 20, bgcolor: '#f0f0f0', borderRadius: 2, overflow: 'hidden' }}>
+            <Box
+              sx={{
+                height: '100%',
+                width: `${scores.overall * 10}%`,
+                bgcolor: getScoreColor(scores.overall),
+                borderRadius: 2,
+                transition: 'width 0.3s ease',
+              }}
+            />
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 60 }}>
+            <Typography sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+              {scores.overall}/10
+            </Typography>
+            <Typography sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
+              ({getScoreLabel(scores.overall)})
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+    );
   };
 
   return (
@@ -918,30 +1179,64 @@ ${recommendation}`;
           ) : (
             <Box sx={{ mt: 2 }}>
               {summary && (
-                <Typography
-                  component="div"
-                  sx={{
-                    whiteSpace: 'pre-wrap',
-                    lineHeight: 1.6,
-                    '& .summary-title': {
+                <Box>
+                  {/* Summary Section */}
+                  <Typography
+                    variant="h6"
+                    sx={{
                       color: 'primary.main',
                       fontWeight: 600,
-                      fontSize: '1.2rem',
-                      mt: 3,
-                      mb: 1,
-                    },
-                    '& .score-section': {
-                      mt: 2,
-                      mb: 1,
-                    },
-                    '& .score-item': {
-                      mb: 0.5,
-                      pl: 1,
-                    },
-                  }}
-                >
-                  {summary}
-                </Typography>
+                      mb: 2,
+                      mt: 1,
+                    }}
+                  >
+                    대화 요약
+                  </Typography>
+                  <Typography
+                    sx={{
+                      whiteSpace: 'pre-wrap',
+                      lineHeight: 1.6,
+                      mb: 3,
+                    }}
+                  >
+                    {summary.split('**대화 요약**')[1]?.split('**심리 상태 점수**')[0]?.trim() || '요약을 생성할 수 없습니다.'}
+                  </Typography>
+
+                  {/* Scores Section */}
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      color: 'primary.main',
+                      fontWeight: 600,
+                      mb: 2,
+                    }}
+                  >
+                    심리 상태 점수
+                  </Typography>
+                  <Box sx={{ mb: 3 }}>
+                    {renderScoreBars()}
+                  </Box>
+
+                  {/* Recommendations Section */}
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      color: 'primary.main',
+                      fontWeight: 600,
+                      mb: 2,
+                    }}
+                  >
+                    권장사항
+                  </Typography>
+                  <Typography
+                    sx={{
+                      whiteSpace: 'pre-wrap',
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    {summary.split('**권장사항**')[1]?.trim() || '권장사항을 생성할 수 없습니다.'}
+                  </Typography>
+                </Box>
               )}
             </Box>
           )}
@@ -949,6 +1244,9 @@ ${recommendation}`;
         <DialogActions>
           <Button onClick={() => setSummaryDialogOpen(false)}>
             닫기
+          </Button>
+          <Button onClick={handleDownloadPDF} variant="contained" startIcon={<DownloadIcon />}>
+            PDF로 다운로드
           </Button>
         </DialogActions>
       </Dialog>
