@@ -671,7 +671,7 @@ ${recommendation}`;
                 disabled={isTyping}
                 size="small"
               >
-                + 새 채팅
+                새 채팅
               </Button>
             </Box>
 
