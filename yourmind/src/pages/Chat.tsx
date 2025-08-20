@@ -27,20 +27,20 @@ import {
   Snackbar,
 } from '@mui/material';
 import {
-  Send as SendIcon,
-  Menu as MenuIcon,
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Psychology as PsychologyIcon,
   Group as GroupIcon,
+  Psychology as PsychologyIcon,
   Favorite as FavoriteIcon,
   TrendingUp as TrendingUpIcon,
-  Assessment as AssessmentIcon,
+  Send as SendIcon,
+  Add as AddIcon,
+  Close as CloseIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
   Summarize as SummarizeIcon,
   Download as DownloadIcon,
-  Close as CloseIcon,
   Chat as ChatIcon,
+  Quiz as QuizIcon,
+  Menu as MenuIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
