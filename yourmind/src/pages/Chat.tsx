@@ -488,17 +488,6 @@ ${recommendation}`;
             새 채팅
           </Button>
 
-          <Button
-            fullWidth
-            variant="outlined"
-            startIcon={<SummarizeIcon />}
-            onClick={handleGenerateSummary}
-            disabled={isTyping || messages.length === 0}
-            sx={{ mb: 2 }}
-          >
-            채팅 요약
-          </Button>
-
           {loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
               <CircularProgress />
@@ -656,6 +645,15 @@ ${recommendation}`;
                 <MenuIcon />
               </IconButton>
               
+              <Box sx={{ flex: 1, textAlign: 'center' }}>
+                <Typography variant="h6" fontWeight={600}>
+                  AI 상담사
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {currentSession ? currentSession.title : '새로운 상담'}
+                </Typography>
+              </Box>
+              
               <Button
                 variant="outlined"
                 startIcon={<SummarizeIcon />}
@@ -666,20 +664,15 @@ ${recommendation}`;
                 채팅 요약
               </Button>
               
-              <Box sx={{ flex: 1, textAlign: 'center' }}>
-                <Typography variant="h6" fontWeight={600}>
-                  AI 상담사
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {currentSession ? currentSession.title : '새로운 상담'}
-                </Typography>
-              </Box>
-              
-              <Box sx={{ flex: 1 }} />
-              
-              <IconButton onClick={startNewChat} disabled={isTyping}>
-                <AddIcon />
-              </IconButton>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={startNewChat}
+                disabled={isTyping}
+                size="small"
+              >
+                + 새 채팅
+              </Button>
             </Box>
 
             {/* Messages */}
