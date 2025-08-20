@@ -1,34 +1,30 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
-  Container,
   Box,
-  Paper,
+  Container,
   TextField,
   Button,
   Typography,
-  Avatar,
+  Paper,
   List,
   ListItem,
   ListItemText,
-  ListItemAvatar,
-  Divider,
-  Chip,
+  ListItemButton,
   Card,
   CardContent,
-  IconButton,
-  Alert,
-  Snackbar,
-  CircularProgress,
-  Drawer,
-  ListItemButton,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
+  Drawer,
+  IconButton,
+  Chip,
+  Grid,
   Tabs,
   Tab,
-  Grid,
-  LinearProgress,
+  CircularProgress,
+  Alert,
+  Snackbar,
 } from '@mui/material';
 import {
   Send as SendIcon,
@@ -121,7 +117,7 @@ const Chat: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // AI Modes
-  const aiModes: AIMode[] = [
+  const aiModes: AIMode[] = useMemo(() => [
     {
       id: 'friendly',
       name: '친구같은',
@@ -242,10 +238,10 @@ F성향 상담사로서의 역할:
 - 대화 중 우울, 불안, 자살 관련 내용이 감지되면 적절한 심리 테스트를 제안하세요
 - 제안할 때는 논리적이고 체계적으로 하세요`
     }
-  ];
+  ], []);
 
   // Psychological Tests
-  const psychologicalTests: Test[] = [
+  const psychologicalTests: Test[] = useMemo(() => [
     {
       id: 'phq9',
       name: 'PHQ-9 우울증 테스트',
@@ -296,7 +292,7 @@ F성향 상담사로서의 역할:
       ],
       scoringMethod: '각 문항에 대한 응답을 바탕으로 자살 위험도를 평가합니다. 긍정적 응답 시 즉시 전문가 상담 필요'
     }
-  ];
+  ], []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -380,73 +376,56 @@ F성향 상담사로서의 역할:
     setModeSelectionOpen(true);
   };
 
-  const handleModeSelection = (mode: AIMode | null, test: Test | null) => {
+  const handleModeSelection = useCallback((mode: AIMode | null, test: Test | null) => {
     setSelectedMode(mode);
     setSelectedTest(test);
     setModeSelectionOpen(false);
-    
-    // Clear current session and messages
-    setSessionId(null);
-    setCurrentSession(null);
-    setMessages([]);
-    
-    // Set initial messages based on selection
-    if (test) {
-      // Initialize test state
+
+    // Initialize messages based on selection
+    let initialMessages = [];
+    let sessionTitle = '새로운 상담';
+
+    if (mode) {
+      sessionTitle = `${mode.name} 상담`;
+      initialMessages = [
+        {
+          id: 'welcome',
+          text: `안녕하세요! 저는 ${mode.name} 스타일의 AI 상담사입니다. 어떤 고민이 있으신가요?`,
+          sender: 'ai' as const,
+          timestamp: new Date(),
+        }
+      ];
+    } else if (test) {
+      sessionTitle = `${test.name}`;
+      initialMessages = [
+        {
+          id: 'welcome',
+          text: `안녕하세요! ${test.name}를 시작하겠습니다. 각 문항에 대해 솔직하게 답변해주세요.`,
+          sender: 'ai' as const,
+          timestamp: new Date(),
+        }
+      ];
       setTestState({
         currentQuestion: 0,
         answers: [],
         isActive: true,
-        testStarted: false,
+        testStarted: true,
       });
-      
-      // Start with test introduction
-      const testIntro: Message = {
-        id: 'test-intro',
-        text: `안녕하세요! ${test.name}를 시작하겠습니다.\n\n${test.description}\n\n이 테스트는 ${test.questions.length}개의 질문으로 구성되어 있습니다. 각 질문에 솔직하게 답변해주시면 됩니다.\n\n준비되셨다면 "시작"이라고 말씀해주세요.`,
-        sender: 'ai',
-        timestamp: new Date(),
-      };
-      setMessages([testIntro]);
-    } else if (mode) {
-      // Start with mode-specific greeting
-      let modeIntroText = '';
-      
-      switch (mode.id) {
-        case 'friendly':
-          modeIntroText = '안녕! 친구처럼 편하게 대화해보자. 오늘 무슨 일이 있어? 언제든 말해봐.';
-          break;
-        case 'direct':
-          modeIntroText = '안녕하세요. 솔직하고 직접적으로 도움을 드리겠습니다. 어떤 문제가 있으신가요?';
-          break;
-        case 'realistic':
-          modeIntroText = '안녕하세요. 현실적이고 실용적인 관점에서 함께 해결책을 찾아보겠습니다. 어떤 고민이 있으신가요?';
-          break;
-        case 'f_tendency':
-          modeIntroText = '안녕하세요. 당신의 감정과 가치를 소중히 여기며 함께 이야기 나누겠습니다. 오늘 어떤 마음이신가요?';
-          break;
-        default:
-          modeIntroText = `안녕하세요! ${mode.name} 모드로 상담을 시작하겠습니다.\n\n${mode.description}\n\n어떤 고민이 있으신가요?`;
-      }
-      
-      const modeIntro: Message = {
-        id: 'mode-intro',
-        text: modeIntroText,
-        sender: 'ai',
-        timestamp: new Date(),
-      };
-      setMessages([modeIntro]);
     } else {
-      // Default mode - more natural greeting
-      const defaultIntro: Message = {
-        id: 'default-intro',
-        text: '안녕하세요! 저는 유어마인드의 AI 상담사예요. 오늘 어떤 이야기를 나누고 싶으신가요? 편하게 말씀해주세요.',
-        sender: 'ai',
-        timestamp: new Date(),
-      };
-      setMessages([defaultIntro]);
+      // Default mode
+      initialMessages = initialQuestions();
     }
-  };
+
+    setMessages(initialMessages);
+    setCurrentSession({
+      id: `session_${Date.now()}`,
+      user_id: user?.id || '',
+      title: sessionTitle,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+    setSessionId(`session_${Date.now()}`);
+  }, [initialQuestions, user]);
 
   // Function to suggest tests based on conversation content
   const suggestTests = (conversationText: string): Test[] => {
