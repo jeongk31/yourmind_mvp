@@ -3,11 +3,15 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { Box } from '@mui/material';
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 import Header from './components/Header';
 import Home from './pages/Home';
 import Chat from './pages/Chat';
 import Profile from './pages/Profile';
 import Recommendations from './pages/Recommendations';
+import SignIn from './components/auth/SignIn';
+import SignUp from './components/auth/SignUp';
 
 const theme = createTheme({
   palette: {
@@ -78,17 +82,36 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Router>
-        <Box sx={{ minHeight: '100vh', backgroundColor: 'background.default' }}>
-          <Header />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/chat" element={<Chat />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/recommendations" element={<Recommendations />} />
-          </Routes>
-        </Box>
-      </Router>
+      <AuthProvider>
+        <Router>
+          <Box sx={{ minHeight: '100vh', backgroundColor: 'background.default' }}>
+            <Header />
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<Home />} />
+              <Route path="/signin" element={<SignIn />} />
+              <Route path="/signup" element={<SignUp />} />
+              
+              {/* Protected routes */}
+              <Route path="/chat" element={
+                <ProtectedRoute>
+                  <Chat />
+                </ProtectedRoute>
+              } />
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } />
+              <Route path="/recommendations" element={
+                <ProtectedRoute>
+                  <Recommendations />
+                </ProtectedRoute>
+              } />
+            </Routes>
+          </Box>
+        </Router>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

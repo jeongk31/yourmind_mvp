@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -9,6 +9,9 @@ import {
   IconButton,
   useTheme,
   useMediaQuery,
+  Menu,
+  MenuItem,
+  Divider,
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -17,13 +20,19 @@ import {
   Person as PersonIcon,
   Recommend as RecommendIcon,
   Menu as MenuIcon,
+  Logout as LogoutIcon,
+  Settings as SettingsIcon,
 } from '@mui/icons-material';
+import { useAuth } from '../contexts/AuthContext';
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { user, signOut } = useAuth();
+  
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const navItems = [
     { label: '홈', path: '/', icon: <PsychologyIcon /> },
@@ -31,6 +40,20 @@ const Header: React.FC = () => {
     { label: '추천', path: '/recommendations', icon: <RecommendIcon /> },
     { label: '프로필', path: '/profile', icon: <PersonIcon /> },
   ];
+
+  const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleProfileMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/');
+    handleProfileMenuClose();
+  };
 
   return (
     <AppBar 
@@ -78,8 +101,8 @@ const Header: React.FC = () => {
           </Typography>
         </Box>
 
-        {/* Navigation */}
-        {!isMobile && (
+        {/* Navigation - Only show if user is authenticated */}
+        {user && !isMobile && (
           <Box sx={{ display: 'flex', gap: 1 }}>
             {navItems.map((item) => (
               <Button
@@ -104,7 +127,7 @@ const Header: React.FC = () => {
         )}
 
         {/* Mobile Menu Button */}
-        {isMobile && (
+        {user && isMobile && (
           <IconButton
             color="primary"
             aria-label="menu"
@@ -114,19 +137,69 @@ const Header: React.FC = () => {
           </IconButton>
         )}
 
-        {/* User Avatar */}
-        <Avatar
-          sx={{
-            bgcolor: 'secondary.main',
-            width: 36,
-            height: 36,
-            cursor: 'pointer',
-            '&:hover': { opacity: 0.8 }
-          }}
-          onClick={() => navigate('/profile')}
-        >
-          <PersonIcon />
-        </Avatar>
+        {/* Auth Buttons or User Profile */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          {user ? (
+            <>
+              <Avatar
+                sx={{
+                  bgcolor: 'secondary.main',
+                  width: 36,
+                  height: 36,
+                  cursor: 'pointer',
+                  '&:hover': { opacity: 0.8 }
+                }}
+                onClick={handleProfileMenuOpen}
+              >
+                {user.email?.charAt(0).toUpperCase() || <PersonIcon />}
+              </Avatar>
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleProfileMenuClose}
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'right',
+                }}
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+              >
+                <MenuItem onClick={() => { navigate('/profile'); handleProfileMenuClose(); }}>
+                  <PersonIcon sx={{ mr: 1 }} />
+                  프로필
+                </MenuItem>
+                <MenuItem onClick={() => { navigate('/settings'); handleProfileMenuClose(); }}>
+                  <SettingsIcon sx={{ mr: 1 }} />
+                  설정
+                </MenuItem>
+                <Divider />
+                <MenuItem onClick={handleLogout}>
+                  <LogoutIcon sx={{ mr: 1 }} />
+                  로그아웃
+                </MenuItem>
+              </Menu>
+            </>
+          ) : (
+            <>
+              <Button
+                color="inherit"
+                onClick={() => navigate('/signin')}
+                sx={{ color: 'text.secondary' }}
+              >
+                로그인
+              </Button>
+              <Button
+                variant="contained"
+                onClick={() => navigate('/signup')}
+                sx={{ borderRadius: 2 }}
+              >
+                회원가입
+              </Button>
+            </>
+          )}
+        </Box>
       </Toolbar>
     </AppBar>
   );
