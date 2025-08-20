@@ -16,22 +16,22 @@ import SignUp from './components/auth/SignUp';
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#6B73FF', // 차분한 파란색
-      light: '#9FA8DA',
-      dark: '#3949AB',
+      main: '#2563EB', // Bright blue
+      light: '#60A5FA',
+      dark: '#1D4ED8',
     },
     secondary: {
-      main: '#FF6B9D', // 따뜻한 핑크색
-      light: '#FFB3D1',
-      dark: '#E91E63',
+      main: '#10B981', // Emerald green
+      light: '#34D399',
+      dark: '#059669',
     },
     background: {
-      default: '#F8F9FF',
+      default: '#F8FAFC',
       paper: '#FFFFFF',
     },
     text: {
-      primary: '#2C3E50',
-      secondary: '#7F8C8D',
+      primary: '#1E293B',
+      secondary: '#64748B',
     },
   },
   typography: {

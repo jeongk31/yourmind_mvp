@@ -419,9 +419,9 @@ const Chat: React.FC = () => {
                   sx={{
                     mb: 1,
                     borderRadius: 2,
-                    backgroundColor: currentSession?.id === session.id ? 'primary.light' : 'transparent',
+                    backgroundColor: currentSession?.id === session.id ? 'primary.main' : 'transparent',
                     '&:hover': {
-                      backgroundColor: currentSession?.id === session.id ? 'primary.light' : 'action.hover',
+                      backgroundColor: currentSession?.id === session.id ? 'primary.main' : 'action.hover',
                     },
                   }}
                 >
@@ -611,6 +611,9 @@ const Chat: React.FC = () => {
                             color: 'white',
                             fontSize: '0.875rem',
                             fontWeight: 600,
+                            flexShrink: 0, // Prevent squishing
+                            minWidth: 32, // Ensure minimum width
+                            minHeight: 32, // Ensure minimum height
                           }}
                         >
                           {message.sender === 'user' ? 'U' : 'AI'}
@@ -654,7 +657,7 @@ const Chat: React.FC = () => {
                   >
                     <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 2 }}>
                       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                        <Box sx={{ bgcolor: 'primary.main', width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                        <Box sx={{ bgcolor: 'primary.main', width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0, minWidth: 32, minHeight: 32 }}>
                           AI
                         </Box>
                         <Paper

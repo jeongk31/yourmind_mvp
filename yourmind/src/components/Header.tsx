@@ -90,7 +90,7 @@ const Header: React.FC = () => {
             variant="h6"
             sx={{
               fontWeight: 700,
-              background: 'linear-gradient(45deg, #6B73FF 30%, #FF6B9D 90%)',
+              background: 'linear-gradient(45deg, #2563EB 30%, #10B981 90%)',
               backgroundClip: 'text',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
@@ -110,14 +110,15 @@ const Header: React.FC = () => {
                 startIcon={item.icon}
                 onClick={() => navigate(item.path)}
                 sx={{
-                  color: location.pathname === item.path ? 'primary.main' : 'text.secondary',
-                  backgroundColor: location.pathname === item.path ? 'primary.light' : 'transparent',
+                  color: location.pathname === item.path ? 'white' : 'text.secondary',
+                  backgroundColor: location.pathname === item.path ? 'primary.main' : 'transparent',
                   '&:hover': {
-                    backgroundColor: 'primary.light',
-                    color: 'primary.main',
+                    backgroundColor: location.pathname === item.path ? 'primary.dark' : 'primary.light',
+                    color: location.pathname === item.path ? 'white' : 'primary.main',
                   },
                   borderRadius: 2,
                   px: 2,
+                  transition: 'all 0.2s ease-in-out',
                 }}
               >
                 {item.label}
