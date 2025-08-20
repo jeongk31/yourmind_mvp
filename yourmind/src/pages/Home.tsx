@@ -14,9 +14,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
   Psychology as PsychologyIcon,
-  Favorite as FavoriteIcon,
   Group as GroupIcon,
-  Straighten as StraightenIcon,
+  Favorite as FavoriteIcon,
   TrendingUp as TrendingUpIcon,
   Assessment as AssessmentIcon,
 } from '@mui/icons-material';

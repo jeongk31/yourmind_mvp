@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { UserProfile, User } from '../lib/supabase';
+import { UserProfile } from '../lib/supabase';
 
 export interface CreateUserProfileData {
   name: string;

@@ -35,7 +35,6 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { ChatService } from '../services/chatService';
-import { ChatSession } from '../lib/supabase';
 import { UserService } from '../services/userService';
 import AvatarColorPicker from '../components/auth/AvatarColorPicker';
 
@@ -133,20 +132,10 @@ const Profile: React.FC = () => {
     });
   };
 
-  const getMoodColor = (mood: string) => {
-    switch (mood) {
-      case '스트레스': return 'warning';
-      case '불안': return 'error';
-      case '우울': return 'info';
-      case '보통': return 'success';
-      default: return 'default';
-    }
-  };
-
   const getLevelColor = (level: number) => {
-    if (level >= 70) return 'error';
-    if (level >= 50) return 'warning';
-    return 'success';
+    if (level < 30) return 'success';
+    if (level < 70) return 'warning';
+    return 'error';
   };
 
   return (

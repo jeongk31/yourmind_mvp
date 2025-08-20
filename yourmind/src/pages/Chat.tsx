@@ -28,6 +28,7 @@ import {
   Tabs,
   Tab,
   Grid,
+  LinearProgress,
 } from '@mui/material';
 import {
   Send as SendIcon,
@@ -35,17 +36,17 @@ import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  Psychology as PsychologyIcon,
+  Group as GroupIcon,
+  Favorite as FavoriteIcon,
+  TrendingUp as TrendingUpIcon,
+  Assessment as AssessmentIcon,
   Summarize as SummarizeIcon,
   Download as DownloadIcon,
-  Psychology as PsychologyIcon,
-  Favorite as FavoriteIcon,
-  Group as GroupIcon,
-  Straighten as StraightenIcon,
-  TrendingUp as TrendingUpIcon,
   Close as CloseIcon,
   Chat as ChatIcon,
 } from '@mui/icons-material';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { ChatSession } from '../lib/supabase';
 import { apiService } from '../utils/api';
@@ -1354,7 +1355,7 @@ ${recommendation}`;
         handleModeSelection(null, null);
       }
     }
-  }, [location.state]);
+  }, [location.state, aiModes, psychologicalTests, handleModeSelection]);
 
   return (
     <Box sx={{ display: 'flex', height: 'calc(100vh - 120px)' }}>
