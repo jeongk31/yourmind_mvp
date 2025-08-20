@@ -13,6 +13,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export interface UserProfile {
   id: string;
   name: string;
+  email: string;
   avatar_color: string;
   created_at: string;
   updated_at: string;
@@ -20,10 +21,11 @@ export interface UserProfile {
 
 export interface User {
   id: string;
+  name: string;
   email: string;
+  avatar_color: string;
   created_at: string;
   updated_at: string;
-  profile?: UserProfile;
 }
 
 export interface ChatSession {

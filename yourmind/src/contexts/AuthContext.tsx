@@ -1,18 +1,13 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
-import { UserProfile } from '../lib/supabase';
+import { UserProfile, User } from '../lib/supabase';
 import { UserService } from '../services/userService';
 
 interface AuthContextType {
   user: User | null;
-  userProfile: UserProfile | null;
-  session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string) => Promise<{ error: any }>;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (name: string, email: string, avatarColor: string) => Promise<{ error: any }>;
+  signIn: (email: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<{ error: any }>;
   refreshUserProfile: () => Promise<void>;
 }
 
@@ -32,100 +27,118 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const loadUserProfile = async (userId: string) => {
-    try {
-      const { data: profile, error } = await UserService.getProfile(userId);
-      if (error) {
-        console.error('Error loading user profile:', error);
-      } else {
-        setUserProfile(profile);
-      }
-    } catch (err) {
-      console.error('Error loading user profile:', err);
-    }
-  };
-
   const refreshUserProfile = async () => {
-    if (user) {
-      await loadUserProfile(user.id);
-    }
+    // This will be implemented when we add session management
   };
 
   useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        await loadUserProfile(session.user.id);
+    // Check if user is stored in localStorage
+    const storedUser = localStorage.getItem('yourmind_user');
+    if (storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
+      } catch (error) {
+        console.error('Error parsing stored user:', error);
+        localStorage.removeItem('yourmind_user');
       }
-      
-      setLoading(false);
-    };
-
-    getInitialSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          await loadUserProfile(session.user.id);
-        } else {
-          setUserProfile(null);
-        }
-        
-        setLoading(false);
-      }
-    );
-
-    return () => subscription.unsubscribe();
+    }
+    setLoading(false);
   }, []);
 
-  const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-    return { error };
+  const signUp = async (name: string, email: string, avatarColor: string) => {
+    try {
+      // Check if email already exists
+      const { exists, error: checkError } = await UserService.checkEmailExists(email);
+      
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned
+        return { error: { message: '이메일 확인 중 오류가 발생했습니다.' } };
+      }
+
+      if (exists) {
+        return { error: { message: '이미 사용 중인 이메일입니다.' } };
+      }
+
+      // Create new user profile
+      const { data: profile, error } = await UserService.createProfile({
+        name,
+        email,
+        avatarColor,
+      });
+
+      if (error) {
+        return { error: { message: '회원가입 중 오류가 발생했습니다.' } };
+      }
+
+      if (profile) {
+        // Convert UserProfile to User format
+        const userData: User = {
+          id: profile.id,
+          name: profile.name,
+          email: profile.email,
+          avatar_color: profile.avatar_color,
+          created_at: profile.created_at,
+          updated_at: profile.updated_at,
+        };
+
+        // Store user in localStorage
+        localStorage.setItem('yourmind_user', JSON.stringify(userData));
+        setUser(userData);
+      }
+
+      return { error: null };
+    } catch (err) {
+      return { error: { message: '회원가입 중 오류가 발생했습니다.' } };
+    }
   };
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+  const signIn = async (email: string) => {
+    try {
+      // Get user profile by email
+      const { data: profile, error } = await UserService.getProfileByEmail(email);
+
+      if (error) {
+        return { error: { message: '로그인 중 오류가 발생했습니다.' } };
+      }
+
+      if (!profile) {
+        return { error: { message: '등록되지 않은 이메일입니다.' } };
+      }
+
+      // Convert UserProfile to User format
+      const userData: User = {
+        id: profile.id,
+        name: profile.name,
+        email: profile.email,
+        avatar_color: profile.avatar_color,
+        created_at: profile.created_at,
+        updated_at: profile.updated_at,
+      };
+
+      // Store user in localStorage
+      localStorage.setItem('yourmind_user', JSON.stringify(userData));
+      setUser(userData);
+
+      return { error: null };
+    } catch (err) {
+      return { error: { message: '로그인 중 오류가 발생했습니다.' } };
+    }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-  };
-
-  const resetPassword = async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    return { error };
+    // Remove user from localStorage
+    localStorage.removeItem('yourmind_user');
+    setUser(null);
   };
 
   const value = {
     user,
-    userProfile,
-    session,
     loading,
     signUp,
     signIn,
     signOut,
-    resetPassword,
     refreshUserProfile,
   };
 

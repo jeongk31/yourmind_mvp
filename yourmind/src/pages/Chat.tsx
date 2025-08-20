@@ -51,7 +51,7 @@ interface Message {
 }
 
 const Chat: React.FC = () => {
-  const { user, userProfile } = useAuth();
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -626,7 +626,7 @@ const Chat: React.FC = () => {
                       >
                         <Box
                           sx={{
-                            bgcolor: message.sender === 'user' ? (userProfile?.avatar_color || 'secondary.main') : 'primary.main',
+                            bgcolor: message.sender === 'user' ? (user?.avatar_color || 'secondary.main') : 'primary.main',
                             width: 32,
                             height: 32,
                             borderRadius: '50%',
@@ -641,7 +641,7 @@ const Chat: React.FC = () => {
                             minHeight: 32, // Ensure minimum height
                           }}
                         >
-                          {message.sender === 'user' ? (userProfile?.name?.charAt(0).toUpperCase() || 'U') : 'AI'}
+                          {message.sender === 'user' ? (user?.name?.charAt(0).toUpperCase() || 'U') : 'AI'}
                         </Box>
                         <Box>
                           <Paper

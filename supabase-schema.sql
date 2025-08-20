@@ -1,7 +1,8 @@
 -- Create users table for user profiles
 CREATE TABLE IF NOT EXISTS user_profiles (
-  id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
   avatar_color TEXT DEFAULT '#3B82F6',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -40,63 +41,39 @@ ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for user_profiles
 CREATE POLICY "Users can view their own profile" ON user_profiles
-  FOR SELECT USING (auth.uid() = id);
+  FOR SELECT USING (true);
 
 CREATE POLICY "Users can insert their own profile" ON user_profiles
-  FOR INSERT WITH CHECK (auth.uid() = id);
+  FOR INSERT WITH CHECK (true);
 
 CREATE POLICY "Users can update their own profile" ON user_profiles
-  FOR UPDATE USING (auth.uid() = id);
+  FOR UPDATE USING (true);
 
 -- Create policies for chat_sessions
 CREATE POLICY "Users can view their own chat sessions" ON chat_sessions
-  FOR SELECT USING (auth.uid() = user_id);
+  FOR SELECT USING (true);
 
 CREATE POLICY "Users can insert their own chat sessions" ON chat_sessions
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+  FOR INSERT WITH CHECK (true);
 
 CREATE POLICY "Users can update their own chat sessions" ON chat_sessions
-  FOR UPDATE USING (auth.uid() = user_id);
+  FOR UPDATE USING (true);
 
 CREATE POLICY "Users can delete their own chat sessions" ON chat_sessions
-  FOR DELETE USING (auth.uid() = user_id);
+  FOR DELETE USING (true);
 
 -- Create policies for chat_messages
 CREATE POLICY "Users can view messages from their sessions" ON chat_messages
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM chat_sessions 
-      WHERE chat_sessions.id = chat_messages.session_id 
-      AND chat_sessions.user_id = auth.uid()
-    )
-  );
+  FOR SELECT USING (true);
 
 CREATE POLICY "Users can insert messages to their sessions" ON chat_messages
-  FOR INSERT WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM chat_sessions 
-      WHERE chat_sessions.id = chat_messages.session_id 
-      AND chat_sessions.user_id = auth.uid()
-    )
-  );
+  FOR INSERT WITH CHECK (true);
 
 CREATE POLICY "Users can update messages from their sessions" ON chat_messages
-  FOR UPDATE USING (
-    EXISTS (
-      SELECT 1 FROM chat_sessions 
-      WHERE chat_sessions.id = chat_messages.session_id 
-      AND chat_sessions.user_id = auth.uid()
-    )
-  );
+  FOR UPDATE USING (true);
 
 CREATE POLICY "Users can delete messages from their sessions" ON chat_messages
-  FOR DELETE USING (
-    EXISTS (
-      SELECT 1 FROM chat_sessions 
-      WHERE chat_sessions.id = chat_messages.session_id 
-      AND chat_sessions.user_id = auth.uid()
-    )
-  );
+  FOR DELETE USING (true);
 
 -- Create function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()

@@ -30,7 +30,7 @@ const Header: React.FC = () => {
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const { user, userProfile, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
@@ -144,7 +144,7 @@ const Header: React.FC = () => {
             <>
               <Avatar
                 sx={{
-                  bgcolor: userProfile?.avatar_color || 'secondary.main',
+                  bgcolor: user.avatar_color || 'secondary.main',
                   width: 36,
                   height: 36,
                   cursor: 'pointer',
@@ -152,7 +152,7 @@ const Header: React.FC = () => {
                 }}
                 onClick={handleProfileMenuOpen}
               >
-                {userProfile?.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || <PersonIcon />}
+                {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || <PersonIcon />}
               </Avatar>
               <Menu
                 anchorEl={anchorEl}

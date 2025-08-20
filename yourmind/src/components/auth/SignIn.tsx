@@ -15,7 +15,6 @@ import { useNavigate } from 'react-router-dom';
 
 const SignIn: React.FC = () => {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -27,18 +26,18 @@ const SignIn: React.FC = () => {
     setError('');
 
     // Validation
-    if (!email || !password) {
-      setError('이메일과 비밀번호를 입력해주세요.');
+    if (!email) {
+      setError('이메일을 입력해주세요.');
       return;
     }
 
     setLoading(true);
 
     try {
-      const { error } = await signIn(email, password);
+      const { error: signInError } = await signIn(email);
       
-      if (error) {
-        setError(error.message);
+      if (signInError) {
+        setError(signInError.message);
       } else {
         navigate('/chat');
       }
@@ -99,17 +98,7 @@ const SignIn: React.FC = () => {
               margin="normal"
               required
               disabled={loading}
-            />
-
-            <TextField
-              fullWidth
-              label="비밀번호"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              margin="normal"
-              required
-              disabled={loading}
+              placeholder="example@email.com"
             />
 
             <Button
@@ -130,7 +119,7 @@ const SignIn: React.FC = () => {
             </Button>
 
             <Box sx={{ textAlign: 'center', mt: 2 }}>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
+              <Typography variant="body2" color="text.secondary">
                 계정이 없으신가요?{' '}
                 <Link
                   href="/signup"
@@ -143,21 +132,6 @@ const SignIn: React.FC = () => {
                   }}
                 >
                   회원가입하기
-                </Link>
-              </Typography>
-              
-              <Typography variant="body2" color="text.secondary">
-                <Link
-                  href="/forgot-password"
-                  sx={{
-                    textDecoration: 'none',
-                    fontWeight: 600,
-                    '&:hover': {
-                      textDecoration: 'underline',
-                    },
-                  }}
-                >
-                  비밀번호를 잊으셨나요?
                 </Link>
               </Typography>
             </Box>

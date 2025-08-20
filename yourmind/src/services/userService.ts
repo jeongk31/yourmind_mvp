@@ -1,15 +1,20 @@
 import { supabase } from '../lib/supabase';
-import { UserProfile } from '../lib/supabase';
+import { UserProfile, User } from '../lib/supabase';
 
 export interface CreateUserProfileData {
-  userId: string;
   name: string;
+  email: string;
   avatarColor: string;
 }
 
 export interface UpdateUserProfileData {
   name?: string;
+  email?: string;
   avatarColor?: string;
+}
+
+export interface LoginData {
+  email: string;
 }
 
 export class UserService {
@@ -19,8 +24,8 @@ export class UserService {
       .from('user_profiles')
       .insert([
         {
-          id: data.userId,
           name: data.name,
+          email: data.email,
           avatar_color: data.avatarColor,
         }
       ])
@@ -30,7 +35,18 @@ export class UserService {
     return { data: profile, error };
   }
 
-  // Get user profile
+  // Get user profile by email
+  static async getProfileByEmail(email: string): Promise<{ data: UserProfile | null; error: any }> {
+    const { data: profile, error } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('email', email)
+      .single();
+
+    return { data: profile, error };
+  }
+
+  // Get user profile by ID
   static async getProfile(userId: string): Promise<{ data: UserProfile | null; error: any }> {
     const { data: profile, error } = await supabase
       .from('user_profiles')
@@ -45,6 +61,7 @@ export class UserService {
   static async updateProfile(userId: string, data: UpdateUserProfileData): Promise<{ data: UserProfile | null; error: any }> {
     const updateData: any = {};
     if (data.name) updateData.name = data.name;
+    if (data.email) updateData.email = data.email;
     if (data.avatarColor) updateData.avatar_color = data.avatarColor;
 
     const { data: profile, error } = await supabase
@@ -65,5 +82,16 @@ export class UserService {
       .eq('id', userId);
 
     return { error };
+  }
+
+  // Check if email already exists
+  static async checkEmailExists(email: string): Promise<{ exists: boolean; error: any }> {
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('id')
+      .eq('email', email)
+      .single();
+
+    return { exists: !!data, error };
   }
 }

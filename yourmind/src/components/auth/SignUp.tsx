@@ -13,13 +13,9 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import AvatarColorPicker from './AvatarColorPicker';
-import { UserService } from '../../services/userService';
-import { supabase } from '../../lib/supabase';
 
 const SignUp: React.FC = () => {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
   const [avatarColor, setAvatarColor] = useState('#3B82F6');
   const [error, setError] = useState('');
@@ -34,23 +30,8 @@ const SignUp: React.FC = () => {
     setError('');
 
     // Validation
-    if (!email || !password || !confirmPassword || !name.trim()) {
+    if (!email || !name.trim()) {
       setError('모든 필드를 입력해주세요.');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError('비밀번호가 일치하지 않습니다.');
-      return;
-    }
-
-    if (password.length < 6) {
-      setError('비밀번호는 최소 6자 이상이어야 합니다.');
-      return;
-    }
-
-    if (!email.includes('@')) {
-      setError('유효한 이메일 주소를 입력해주세요.');
       return;
     }
 
@@ -62,32 +43,15 @@ const SignUp: React.FC = () => {
     setLoading(true);
 
     try {
-      const { error: signUpError } = await signUp(email, password);
+      const { error: signUpError } = await signUp(name.trim(), email, avatarColor);
       
       if (signUpError) {
         setError(signUpError.message);
       } else {
-        // Get the current user to create profile
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (user) {
-          // Create user profile
-          const { error: profileError } = await UserService.createProfile({
-            userId: user.id,
-            name: name.trim(),
-            avatarColor,
-          });
-
-          if (profileError) {
-            console.error('Error creating profile:', profileError);
-            setError('프로필 생성 중 오류가 발생했습니다.');
-          } else {
-            setSuccess(true);
-            setTimeout(() => {
-              navigate('/signin');
-            }, 2000);
-          }
-        }
+        setSuccess(true);
+        setTimeout(() => {
+          navigate('/signin');
+        }, 2000);
       }
     } catch (err) {
       setError('회원가입 중 오류가 발생했습니다.');
@@ -138,7 +102,7 @@ const SignUp: React.FC = () => {
 
           {success && (
             <Alert severity="success" sx={{ mb: 2 }}>
-              회원가입이 완료되었습니다! 이메일을 확인해주세요.
+              회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.
             </Alert>
           )}
 
@@ -163,29 +127,7 @@ const SignUp: React.FC = () => {
               margin="normal"
               required
               disabled={loading}
-            />
-
-            <TextField
-              fullWidth
-              label="비밀번호"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              margin="normal"
-              required
-              disabled={loading}
-              helperText="최소 6자 이상"
-            />
-
-            <TextField
-              fullWidth
-              label="비밀번호 확인"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              margin="normal"
-              required
-              disabled={loading}
+              placeholder="example@email.com"
             />
 
             <Box sx={{ mt: 3, mb: 3 }}>
