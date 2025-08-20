@@ -10,11 +10,20 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Database types
+export interface UserProfile {
+  id: string;
+  name: string;
+  avatar_color: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface User {
   id: string;
   email: string;
   created_at: string;
   updated_at: string;
+  profile?: UserProfile;
 }
 
 export interface ChatSession {

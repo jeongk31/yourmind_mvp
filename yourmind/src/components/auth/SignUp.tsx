@@ -12,11 +12,16 @@ import {
 import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import AvatarColorPicker from './AvatarColorPicker';
+import { UserService } from '../../services/userService';
+import { supabase } from '../../lib/supabase';
 
 const SignUp: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [name, setName] = useState('');
+  const [avatarColor, setAvatarColor] = useState('#3B82F6');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -29,7 +34,7 @@ const SignUp: React.FC = () => {
     setError('');
 
     // Validation
-    if (!email || !password || !confirmPassword) {
+    if (!email || !password || !confirmPassword || !name.trim()) {
       setError('모든 필드를 입력해주세요.');
       return;
     }
@@ -49,18 +54,40 @@ const SignUp: React.FC = () => {
       return;
     }
 
+    if (name.trim().length < 2) {
+      setError('이름은 최소 2자 이상이어야 합니다.');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const { error } = await signUp(email, password);
+      const { error: signUpError } = await signUp(email, password);
       
-      if (error) {
-        setError(error.message);
+      if (signUpError) {
+        setError(signUpError.message);
       } else {
-        setSuccess(true);
-        setTimeout(() => {
-          navigate('/signin');
-        }, 2000);
+        // Get the current user to create profile
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          // Create user profile
+          const { error: profileError } = await UserService.createProfile({
+            userId: user.id,
+            name: name.trim(),
+            avatarColor,
+          });
+
+          if (profileError) {
+            console.error('Error creating profile:', profileError);
+            setError('프로필 생성 중 오류가 발생했습니다.');
+          } else {
+            setSuccess(true);
+            setTimeout(() => {
+              navigate('/signin');
+            }, 2000);
+          }
+        }
       }
     } catch (err) {
       setError('회원가입 중 오류가 발생했습니다.');
@@ -90,7 +117,7 @@ const SignUp: React.FC = () => {
           sx={{
             p: 4,
             width: '100%',
-            maxWidth: 400,
+            maxWidth: 450,
             borderRadius: 3,
           }}
         >
@@ -116,6 +143,17 @@ const SignUp: React.FC = () => {
           )}
 
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+            <TextField
+              fullWidth
+              label="이름"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              margin="normal"
+              required
+              disabled={loading}
+              placeholder="홍길동"
+            />
+
             <TextField
               fullWidth
               label="이메일"
@@ -149,6 +187,13 @@ const SignUp: React.FC = () => {
               required
               disabled={loading}
             />
+
+            <Box sx={{ mt: 3, mb: 3 }}>
+              <AvatarColorPicker
+                selectedColor={avatarColor}
+                onColorSelect={setAvatarColor}
+              />
+            </Box>
 
             <Button
               type="submit"
