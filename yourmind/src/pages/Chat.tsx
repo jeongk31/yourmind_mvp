@@ -39,7 +39,6 @@ import {
   Summarize as SummarizeIcon,
   Download as DownloadIcon,
   Chat as ChatIcon,
-  Quiz as QuizIcon,
   Menu as MenuIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
