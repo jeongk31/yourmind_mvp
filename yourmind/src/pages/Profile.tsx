@@ -1,42 +1,45 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Container,
+  Typography,
   Box,
   Card,
   CardContent,
-  Typography,
-  Avatar,
   Button,
-  Chip,
-  LinearProgress,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemAvatar,
-  Divider,
+  Avatar,
+  Grid,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   TextField,
+  LinearProgress,
+  Divider,
+  Chip,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemAvatar,
   IconButton,
 } from '@mui/material';
-import { motion } from 'framer-motion';
 import {
   Edit as EditIcon,
-  Psychology as PsychologyIcon,
-  CalendarToday as CalendarIcon,
-  LocationOn as LocationIcon,
-  Phone as PhoneIcon,
   Email as EmailIcon,
+  Phone as PhoneIcon,
+  LocationOn as LocationIcon,
+  CalendarToday as CalendarIcon,
   Assessment as AssessmentIcon,
   History as HistoryIcon,
+  Psychology as PsychologyIcon,
   Close as CloseIcon,
 } from '@mui/icons-material';
+import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
-import { ChatService } from '../services/chatService';
 import { UserService } from '../services/userService';
+import { ChatService } from '../services/chatService';
 import AvatarColorPicker from '../components/auth/AvatarColorPicker';
+import LocationMap from '../components/LocationMap';
 
 interface SessionRecord {
   id: string;
@@ -213,6 +216,19 @@ const Profile: React.FC = () => {
                 </Button>
               </CardContent>
             </Card>
+            
+            {/* Location Map */}
+            {user?.location && (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+              >
+                <Box sx={{ mt: 3 }}>
+                  <LocationMap location={user.location} />
+                </Box>
+              </motion.div>
+            )}
           </motion.div>
         </Box>
 

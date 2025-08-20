@@ -38,7 +38,6 @@ const SignUp: React.FC = () => {
   // Auto-detect location using browser geolocation
   const detectLocation = async () => {
     setLocationLoading(true);
-    setError('');
     try {
       if (!navigator.geolocation) {
         setError('브라우저가 위치 정보를 지원하지 않습니다.');
@@ -59,8 +58,6 @@ const SignUp: React.FC = () => {
       const address = await getAddressFromCoords(latitude, longitude);
       if (address) {
         setLocation(address);
-      } else {
-        setError('주소를 찾을 수 없습니다. 수동으로 입력해주세요.');
       }
     } catch (err) {
       console.error('Location detection failed:', err);

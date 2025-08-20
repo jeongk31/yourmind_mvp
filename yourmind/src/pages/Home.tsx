@@ -20,6 +20,7 @@ import {
   Assessment as AssessmentIcon,
 } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
+import LocationMap from '../components/LocationMap';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -460,6 +461,22 @@ const Home: React.FC = () => {
               </Box>
             </motion.div>
           ))}
+        </Box>
+      </motion.div>
+
+      {/* Location Map Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.3 }}
+      >
+        <Box sx={{ mb: 8 }}>
+          <Typography variant="h2" sx={{ textAlign: 'center', mb: 6, fontWeight: 600 }}>
+            서비스 위치
+          </Typography>
+          <Box sx={{ maxWidth: 800, mx: 'auto' }}>
+            <LocationMap location="서울특별시 강남구" />
+          </Box>
         </Box>
       </motion.div>
 
