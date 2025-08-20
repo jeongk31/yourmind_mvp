@@ -161,7 +161,11 @@ const Chat: React.FC = () => {
 
 주의사항:
 - 위험한 상황이 감지되면 진지하게 대응하세요
-- 전문적인 도움이 필요한 경우 조언해주세요`
+- 전문적인 도움이 필요한 경우 조언해주세요
+
+테스트 제안:
+- 대화 중 우울, 불안, 자살 관련 내용이 감지되면 적절한 심리 테스트를 제안하세요
+- 제안할 때는 자연스럽고 부담스럽지 않게 하세요`
     },
     {
       id: 'direct',
@@ -187,7 +191,11 @@ const Chat: React.FC = () => {
 
 주의사항:
 - 너무 냉정하지 않게 하세요
-- 위험한 상황은 여전히 진지하게 다루세요`
+- 위험한 상황은 여전히 진지하게 다루세요
+
+테스트 제안:
+- 대화 중 우울, 불안, 자살 관련 내용이 감지되면 적절한 심리 테스트를 제안하세요
+- 제안할 때는 직접적이고 명확하게 하세요`
     },
     {
       id: 'realistic',
@@ -213,7 +221,11 @@ const Chat: React.FC = () => {
 
 주의사항:
 - 너무 비관적이지 않게 하세요
-- 희망을 주되 현실적이게 하세요`
+- 희망을 주되 현실적이게 하세요
+
+테스트 제안:
+- 대화 중 우울, 불안, 자살 관련 내용이 감지되면 적절한 심리 테스트를 제안하세요
+- 제안할 때는 현실적이고 실용적인 관점에서 하세요`
     },
     {
       id: 'f_tendency',
@@ -239,7 +251,11 @@ F성향 상담사로서의 역할:
 
 주의사항:
 - 너무 감정적이지 않게 하세요
-- 현실적인 부분도 고려하세요`
+- 현실적인 부분도 고려하세요
+
+테스트 제안:
+- 대화 중 우울, 불안, 자살 관련 내용이 감지되면 적절한 심리 테스트를 제안하세요
+- 제안할 때는 따뜻하고 공감적으로 하세요`
     }
   ];
 
@@ -398,23 +414,80 @@ F성향 상담사로서의 역할:
       setMessages([testIntro]);
     } else if (mode) {
       // Start with mode-specific greeting
+      let modeIntroText = '';
+      
+      switch (mode.id) {
+        case 'friendly':
+          modeIntroText = '안녕! 친구처럼 편하게 대화해보자. 오늘 무슨 일이 있어? 언제든 말해봐.';
+          break;
+        case 'direct':
+          modeIntroText = '안녕하세요. 솔직하고 직접적으로 도움을 드리겠습니다. 어떤 문제가 있으신가요?';
+          break;
+        case 'realistic':
+          modeIntroText = '안녕하세요. 현실적이고 실용적인 관점에서 함께 해결책을 찾아보겠습니다. 어떤 고민이 있으신가요?';
+          break;
+        case 'f_tendency':
+          modeIntroText = '안녕하세요. 당신의 감정과 가치를 소중히 여기며 함께 이야기 나누겠습니다. 오늘 어떤 마음이신가요?';
+          break;
+        default:
+          modeIntroText = `안녕하세요! ${mode.name} 모드로 상담을 시작하겠습니다.\n\n${mode.description}\n\n어떤 고민이 있으신가요?`;
+      }
+      
       const modeIntro: Message = {
         id: 'mode-intro',
-        text: `안녕하세요! ${mode.name} 모드로 상담을 시작하겠습니다.\n\n${mode.description}\n\n어떤 고민이 있으신가요?`,
+        text: modeIntroText,
         sender: 'ai',
         timestamp: new Date(),
       };
       setMessages([modeIntro]);
     } else {
-      // Default mode
+      // Default mode - more natural greeting
       const defaultIntro: Message = {
         id: 'default-intro',
-        text: '안녕하세요! 저는 오늘 당신의 이야기를 들어줄 상담 AI예요.',
+        text: '안녕하세요! 저는 유어마인드의 AI 상담사예요. 오늘 어떤 이야기를 나누고 싶으신가요? 편하게 말씀해주세요.',
         sender: 'ai',
         timestamp: new Date(),
       };
       setMessages([defaultIntro]);
     }
+  };
+
+  // Function to suggest tests based on conversation content
+  const suggestTests = (conversationText: string): Test[] => {
+    const suggestions: Test[] = [];
+    const lowerText = conversationText.toLowerCase();
+    
+    // Check for depression indicators
+    if (lowerText.includes('우울') || lowerText.includes('슬픔') || lowerText.includes('희망이 없') || 
+        lowerText.includes('의미가 없') || lowerText.includes('죽고 싶') || lowerText.includes('자살')) {
+      suggestions.push(psychologicalTests[0]); // PHQ-9
+    }
+    
+    // Check for anxiety indicators
+    if (lowerText.includes('불안') || lowerText.includes('걱정') || lowerText.includes('긴장') || 
+        lowerText.includes('초조') || lowerText.includes('두려움') || lowerText.includes('패닉')) {
+      suggestions.push(psychologicalTests[1]); // GAD-7
+    }
+    
+    // Check for suicide risk indicators
+    if (lowerText.includes('죽고 싶') || lowerText.includes('자살') || lowerText.includes('끝내고 싶') || 
+        lowerText.includes('살 의미가 없') || lowerText.includes('자신을 해치고 싶')) {
+      suggestions.push(psychologicalTests[2]); // C-SSRS
+    }
+    
+    return suggestions;
+  };
+
+  // Function to create test suggestion message
+  const createTestSuggestionMessage = (suggestedTests: Test[]): Message => {
+    const testList = suggestedTests.map(test => `• ${test.name}`).join('\n');
+    
+    return {
+      id: `test-suggestion-${Date.now()}`,
+      text: `대화를 통해 몇 가지 심리 테스트를 제안드리고 싶어요. 이 테스트들은 현재 상황을 더 정확히 파악하는 데 도움이 될 수 있습니다:\n\n${testList}\n\n이 중에서 관심 있는 테스트가 있으시면 말씀해주세요. 아니면 계속해서 자유롭게 대화하셔도 됩니다.`,
+      sender: 'ai',
+      timestamp: new Date(),
+    };
   };
 
   // Load sessions on mount
@@ -493,6 +566,14 @@ F성향 상담사로서의 역할:
   // Send message
   const handleSendMessage = async () => {
     if (!inputText.trim() || isTyping || !user) return;
+
+    // Check if user wants to take a test
+    const requestedTest = handleTestRequest(inputText);
+    if (requestedTest) {
+      startTestFromConversation(requestedTest);
+      setInputText('');
+      return;
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -573,6 +654,30 @@ ${selectedTest.scoringMethod}
       };
 
       setMessages(prev => [...prev, aiMessage]);
+
+      // Check for test suggestions (only for non-test conversations)
+      if (!selectedTest && (selectedMode || !selectedMode)) {
+        const conversationText = [...messages, userMessage, aiMessage]
+          .map(msg => msg.text)
+          .join(' ');
+        
+        const suggestedTests = suggestTests(conversationText);
+        
+        // Only suggest if we haven't suggested recently and there are suggestions
+        if (suggestedTests.length > 0 && !messages.some(msg => msg.id.includes('test-suggestion'))) {
+          const suggestionMessage = createTestSuggestionMessage(suggestedTests);
+          setMessages(prev => [...prev, suggestionMessage]);
+          
+          // Save suggestion message to Supabase
+          if (currentSessionId) {
+            ChatService.saveMessage({
+              sessionId: currentSessionId,
+              content: suggestionMessage.text,
+              sender: 'ai',
+            });
+          }
+        }
+      }
 
       // Save messages to Supabase if we have a session
       if (currentSessionId) {
@@ -964,6 +1069,51 @@ ${recommendation}`;
         </Box>
       </Box>
     );
+  };
+
+  // Function to handle test requests from conversation
+  const handleTestRequest = (userInput: string): Test | null => {
+    const lowerInput = userInput.toLowerCase();
+    
+    // Check if user wants to take a specific test
+    if (lowerInput.includes('phq') || lowerInput.includes('우울증') || lowerInput.includes('우울')) {
+      return psychologicalTests[0]; // PHQ-9
+    } else if (lowerInput.includes('gad') || lowerInput.includes('불안') || lowerInput.includes('불안장애')) {
+      return psychologicalTests[1]; // GAD-7
+    } else if (lowerInput.includes('자살') || lowerInput.includes('cssrs') || lowerInput.includes('위험')) {
+      return psychologicalTests[2]; // C-SSRS
+    } else if (lowerInput.includes('테스트') || lowerInput.includes('검사')) {
+      // If they just say "test" without specifying, suggest the most relevant one
+      const conversationText = messages.map(msg => msg.text).join(' ');
+      const suggestions = suggestTests(conversationText);
+      return suggestions.length > 0 ? suggestions[0] : null;
+    }
+    
+    return null;
+  };
+
+  // Function to start a test from conversation
+  const startTestFromConversation = (test: Test) => {
+    setSelectedTest(test);
+    setSelectedMode(null);
+    
+    const testIntro: Message = {
+      id: 'test-intro',
+      text: `좋습니다! ${test.name}를 시작하겠습니다.\n\n${test.description}\n\n이 테스트는 ${test.questions.length}개의 질문으로 구성되어 있습니다. 각 질문에 솔직하게 답변해주시면 됩니다.\n\n준비되셨다면 "시작"이라고 말씀해주세요.`,
+      sender: 'ai',
+      timestamp: new Date(),
+    };
+    
+    setMessages(prev => [...prev, testIntro]);
+    
+    // Save test intro to Supabase
+    if (sessionId) {
+      ChatService.saveMessage({
+        sessionId,
+        content: testIntro.text,
+        sender: 'ai',
+      });
+    }
   };
 
   return (
