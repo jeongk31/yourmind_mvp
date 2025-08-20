@@ -7,7 +7,7 @@ const chatController = {
   // Send a message and get AI response
   async sendMessage(req, res) {
     try {
-      const { message, sessionId } = req.body;
+      const { message, sessionId, systemPrompt } = req.body;
 
       if (!message || !sessionId) {
         return res.status(400).json({
@@ -17,12 +17,19 @@ const chatController = {
 
       // Get or create conversation history for this session
       if (!conversationHistory.has(sessionId)) {
+        const promptToUse = systemPrompt || COUNSELING_SYSTEM_PROMPT;
         conversationHistory.set(sessionId, [
           {
             role: 'system',
-            content: COUNSELING_SYSTEM_PROMPT
+            content: promptToUse
           }
         ]);
+      } else if (systemPrompt) {
+        // Update system prompt if provided
+        const conversation = conversationHistory.get(sessionId);
+        if (conversation.length > 0 && conversation[0].role === 'system') {
+          conversation[0].content = systemPrompt;
+        }
       }
 
       const conversation = conversationHistory.get(sessionId);

@@ -75,10 +75,10 @@ class ApiService {
   }
 
   // Send a message and get AI response
-  async sendMessage(message: string, sessionId: string): Promise<ChatResponse> {
+  async sendMessage(message: string, sessionId: string, systemPrompt?: string): Promise<ChatResponse> {
     return this.request<ChatResponse>('/chat/send', {
       method: 'POST',
-      body: JSON.stringify({ message, sessionId }),
+      body: JSON.stringify({ message, sessionId, systemPrompt }),
     });
   }
 

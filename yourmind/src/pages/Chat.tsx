@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Container,
   Box,
@@ -7,21 +7,27 @@ import {
   Button,
   Typography,
   Avatar,
-  Alert,
-  Snackbar,
-  CircularProgress,
-  IconButton,
-  Drawer,
   List,
   ListItem,
   ListItemText,
+  ListItemAvatar,
+  Divider,
+  Chip,
+  Card,
+  CardContent,
+  IconButton,
+  Alert,
+  Snackbar,
+  CircularProgress,
+  Drawer,
   ListItemButton,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Chip,
-  Divider,
+  Tabs,
+  Tab,
+  Grid,
 } from '@mui/material';
 import {
   Send as SendIcon,
@@ -29,16 +35,21 @@ import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Close as CloseIcon,
-  Chat as ChatIcon,
   Summarize as SummarizeIcon,
   Download as DownloadIcon,
+  Psychology as PsychologyIcon,
+  Favorite as FavoriteIcon,
+  Group as GroupIcon,
+  Straighten as StraightenIcon,
+  TrendingUp as TrendingUpIcon,
+  Close as CloseIcon,
+  Chat as ChatIcon,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
-import { ChatService } from '../services/chatService';
 import { ChatSession } from '../lib/supabase';
 import { apiService } from '../utils/api';
+import { ChatService } from '../services/chatService';
 
 interface Message {
   id: string;
@@ -52,27 +63,236 @@ interface Message {
   };
 }
 
+interface AIMode {
+  id: string;
+  name: string;
+  description: string;
+  icon: React.ReactNode;
+  systemPrompt: string;
+}
+
+interface Test {
+  id: string;
+  name: string;
+  description: string;
+  questions: string[];
+  scoringMethod: string;
+}
+
 const Chat: React.FC = () => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [riskMessage, setRiskMessage] = useState<string | null>(null);
-  const [showRiskAlert, setShowRiskAlert] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [currentSession, setCurrentSession] = useState<ChatSession | null>(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [editingSession, setEditingSession] = useState<ChatSession | null>(null);
   const [newTitle, setNewTitle] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [summary, setSummary] = useState<string | null>(null);
-  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
+  const [summary, setSummary] = useState('');
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [showRiskAlert, setShowRiskAlert] = useState(false);
+  const [riskMessage, setRiskMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [modeSelectionOpen, setModeSelectionOpen] = useState(false);
+  const [selectedMode, setSelectedMode] = useState<AIMode | null>(null);
+  const [selectedTest, setSelectedTest] = useState<Test | null>(null);
+  const [currentTab, setCurrentTab] = useState(0); // 0: Default, 1: Modes, 2: Tests
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // AI Modes
+  const aiModes: AIMode[] = [
+    {
+      id: 'default',
+      name: '기본 상담사',
+      description: '전문적이고 따뜻한 AI 상담사',
+      icon: <PsychologyIcon />,
+      systemPrompt: `당신은 "유어마인드"의 AI 상담사입니다. 따뜻하고 전문적인 심리 상담을 제공하는 것이 목표입니다.
+
+상담사로서의 역할:
+1. 공감적이고 따뜻한 태도로 응답하세요
+2. 사용자의 감정을 인정하고 이해한다는 것을 표현하세요
+3. 전문적이면서도 접근하기 쉬운 언어를 사용하세요
+4. 위험한 상황(자해, 타해 등)이 감지되면 즉시 전문가 상담을 권유하세요
+5. 구체적이고 실용적인 조언을 제공하세요
+6. 상담의 경계를 유지하되, 따뜻한 지지를 제공하세요
+
+응답 스타일:
+- 한국어로 응답하세요
+- 존댓말을 사용하되 너무 딱딱하지 않게 하세요
+- 사용자의 감정을 반영하는 표현을 사용하세요
+- 필요시 적절한 질문을 통해 더 깊은 대화를 이끌어내세요
+- 위험 신호가 감지되면 즉시 전문가 상담을 강력히 권유하세요
+- 마크다운 형식(**굵게**, ## 제목 등)을 사용하지 마세요
+- 특수문자나 포맷팅 없이 일반 텍스트로만 응답하세요
+
+주의사항:
+- 의학적 진단이나 처방을 하지 마세요
+- 약물 복용에 대한 구체적인 조언을 하지 마세요
+- 심각한 정신 건강 문제의 경우 전문가 상담을 권유하세요
+- 개인정보나 민감한 정보를 요구하지 마세요`
+    },
+    {
+      id: 'friendly',
+      name: '친구같은',
+      description: '편안하고 친근한 친구처럼 대화',
+      icon: <GroupIcon />,
+      systemPrompt: `당신은 사용자의 친한 친구입니다. 편안하고 친근한 태도로 대화하세요.
+
+친구로서의 역할:
+1. 편안하고 친근한 말투를 사용하세요
+2. 공감하고 위로해주세요
+3. 솔직하고 진정성 있는 대화를 나누세요
+4. 필요시 조언을 해주되, 강요하지 마세요
+5. 함께 웃고 함께 슬퍼해주세요
+
+응답 스타일:
+- 친구처럼 편하게 대화하세요
+- 존댓말과 반말을 적절히 섞어서 사용하세요
+- 이모티콘을 적절히 사용해도 됩니다
+- 솔직하고 진정성 있는 반응을 보여주세요
+- 마크다운 형식(**굵게**, ## 제목 등)을 사용하지 마세요
+- 특수문자나 포맷팅 없이 일반 텍스트로만 응답하세요
+
+주의사항:
+- 위험한 상황이 감지되면 진지하게 대응하세요
+- 전문적인 도움이 필요한 경우 조언해주세요`
+    },
+    {
+      id: 'direct',
+      name: '직설적인',
+      description: '솔직하고 직접적인 조언',
+      icon: <StraightenIcon />,
+      systemPrompt: `당신은 솔직하고 직접적인 상담사입니다. 핵심을 짚어주고 실용적인 조언을 제공하세요.
+
+직설적 상담사로서의 역할:
+1. 핵심 문제를 정확히 파악하고 지적하세요
+2. 솔직하고 직접적인 피드백을 제공하세요
+3. 실용적이고 구체적인 해결책을 제시하세요
+4. 감정적 위로보다는 실질적인 도움에 집중하세요
+5. 현실적이고 가능한 조언을 해주세요
+
+응답 스타일:
+- 솔직하고 직접적으로 말하세요
+- 핵심을 짚어주세요
+- 실용적인 조언을 제공하세요
+- 감정적이기보다는 논리적으로 접근하세요
+- 마크다운 형식(**굵게**, ## 제목 등)을 사용하지 마세요
+- 특수문자나 포맷팅 없이 일반 텍스트로만 응답하세요
+
+주의사항:
+- 너무 냉정하지 않게 하세요
+- 위험한 상황은 여전히 진지하게 다루세요`
+    },
+    {
+      id: 'realistic',
+      name: '현실적인',
+      description: '현실적이고 실용적인 관점',
+      icon: <TrendingUpIcon />,
+      systemPrompt: `당신은 현실적이고 실용적인 상담사입니다. 현실을 직시하고 실현 가능한 해결책을 제시하세요.
+
+현실적 상담사로서의 역할:
+1. 현실을 직시하고 인정하세요
+2. 실현 가능한 목표와 해결책을 제시하세요
+3. 단계적이고 구체적인 접근 방법을 제안하세요
+4. 장기적인 관점에서 조언하세요
+5. 현실적인 기대치를 설정하도록 도와주세요
+
+응답 스타일:
+- 현실적이고 실용적으로 접근하세요
+- 구체적이고 실현 가능한 조언을 제공하세요
+- 단계별 접근 방법을 제시하세요
+- 장기적인 관점을 유지하세요
+- 마크다운 형식(**굵게**, ## 제목 등)을 사용하지 마세요
+- 특수문자나 포맷팅 없이 일반 텍스트로만 응답하세요
+
+주의사항:
+- 너무 비관적이지 않게 하세요
+- 희망을 주되 현실적이게 하세요`
+    },
+    {
+      id: 'f_tendency',
+      name: 'F성향을 위한',
+      description: '감정적이고 공감적인 접근',
+      icon: <FavoriteIcon />,
+      systemPrompt: `당신은 F성향(감정형) 사람들을 위한 상담사입니다. 감정적이고 공감적인 접근을 하세요.
+
+F성향 상담사로서의 역할:
+1. 감정에 집중하고 공감하세요
+2. 관계와 인간관계를 중요시하세요
+3. 가치와 의미를 중시하는 관점을 제공하세요
+4. 조화와 평화를 추구하는 조언을 하세요
+5. 개인의 가치관과 감정을 존중하세요
+
+응답 스타일:
+- 감정적이고 공감적으로 접근하세요
+- 관계와 인간관계를 중시하는 관점을 제공하세요
+- 가치와 의미를 중요시하세요
+- 조화롭고 평화로운 해결책을 제시하세요
+- 마크다운 형식(**굵게**, ## 제목 등)을 사용하지 마세요
+- 특수문자나 포맷팅 없이 일반 텍스트로만 응답하세요
+
+주의사항:
+- 너무 감정적이지 않게 하세요
+- 현실적인 부분도 고려하세요`
+    }
+  ];
+
+  // Psychological Tests
+  const psychologicalTests: Test[] = [
+    {
+      id: 'phq9',
+      name: 'PHQ-9 우울증 테스트',
+      description: '9개 문항으로 구성된 우울증 선별 도구',
+      questions: [
+        '기분이 가라앉거나, 우울하거나, 희망이 없다고 느꼈나요?',
+        '평소에 하던 일에 대한 흥미가 없어지거나 즐거움을 느끼지 못했나요?',
+        '잠들기 어렵거나 자주 깨거나, 너무 많이 잤나요?',
+        '피곤하다고 느끼거나 기운이 없었나요?',
+        '식욕이 없거나 너무 많이 먹었나요?',
+        '자신에 대해 나쁘게 느끼거나, 실패자라고 느끼거나, 자신이나 가족을 실망시켰다고 느꼈나요?',
+        '신문을 읽거나 TV를 보는 것과 같은 일에 집중하기 어려웠나요?',
+        '다른 사람들이 눈치챌 정도로 천천히 움직이거나 말했나요? 아니면 반대로 평소보다 더 많이 움직이거나 말했나요?',
+        '죽는 것이 좋겠다고 생각하거나, 어떻게든 자신을 해치고 싶다고 생각했나요?'
+      ],
+      scoringMethod: '각 문항 0-3점, 총점 0-27점. 10점 이상 시 우울증 가능성 높음'
+    },
+    {
+      id: 'gad7',
+      name: 'GAD-7 불안장애 테스트',
+      description: '7개 문항으로 구성된 불안장애 선별 도구',
+      questions: [
+        '긴장하거나, 불안하거나, 가장자리에 앉아있는 것 같은 느낌',
+        '걱정하거나 걱정할 일이 너무 많음',
+        '걱정을 멈추거나 통제하기 어려움',
+        '너무 걱정해서 가만히 앉아있기 어려움',
+        '걱정이나 긴장 때문에 쉽게 짜증이 남',
+        '걱정 때문에 무언가가 갑자기 일어날 것 같은 두려움',
+        '평소보다 더 쉽게 놀라거나 깜짝 놀람'
+      ],
+      scoringMethod: '각 문항 0-3점, 총점 0-21점. 10점 이상 시 불안장애 가능성 높음'
+    },
+    {
+      id: 'cssrs',
+      name: 'C-SSRS 자살위험 테스트',
+      description: '자살 사고와 행동을 평가하는 도구',
+      questions: [
+        '죽고 싶다는 생각이 들었나요?',
+        '자신을 해치고 싶다는 생각이 들었나요?',
+        '자살에 대해 생각해본 적이 있나요?',
+        '자살 계획을 세워본 적이 있나요?',
+        '자살을 시도해본 적이 있나요?',
+        '자살을 시도할 의도가 있나요?',
+        '자살을 시도할 수단을 가지고 있나요?'
+      ],
+      scoringMethod: '각 문항에 대한 응답을 바탕으로 자살 위험도를 평가합니다. 긍정적 응답 시 즉시 전문가 상담 필요'
+    }
+  ];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -152,42 +372,50 @@ const Chat: React.FC = () => {
   }, [initialQuestions]);
 
   // Start new chat
-  const startNewChat = useCallback(async () => {
-    if (!user) return;
+  const startNewChat = () => {
+    setModeSelectionOpen(true);
+  };
 
-    try {
-      setIsTyping(true);
-      const response = await apiService.startConversation();
-      
-      if (response.success) {
-        const sessionNumber = sessions.length + 1;
-        const title = `채팅 ${sessionNumber}`;
-        
-        // Create new session in Supabase
-        const { data: session, error } = await ChatService.createSession({
-          title,
-          userId: user.id,
-        });
-
-        if (error) {
-          console.error('Error creating session:', error);
-          return;
-        }
-
-        if (session) {
-          setSessionId(session.id);
-          setCurrentSession(session);
-          setMessages(initialQuestions());
-          await loadSessions(); // Refresh sessions list
-        }
-      }
-    } catch (error) {
-      console.error('Failed to start conversation:', error);
-      setError('새로운 상담을 시작할 수 없습니다. 잠시 후 다시 시도해주세요.');
-    } finally {
-      setIsTyping(false);
+  const handleModeSelection = (mode: AIMode | null, test: Test | null) => {
+    setSelectedMode(mode);
+    setSelectedTest(test);
+    setModeSelectionOpen(false);
+    
+    // Clear current session and messages
+    setSessionId(null);
+    setCurrentSession(null);
+    setMessages([]);
+    
+    // Set initial messages based on selection
+    if (test) {
+      // Start with test introduction
+      const testIntro: Message = {
+        id: 'test-intro',
+        text: `안녕하세요! ${test.name}를 시작하겠습니다.\n\n${test.description}\n\n이 테스트는 ${test.questions.length}개의 질문으로 구성되어 있습니다. 각 질문에 솔직하게 답변해주시면 됩니다.\n\n준비되셨다면 "시작"이라고 말씀해주세요.`,
+        sender: 'ai',
+        timestamp: new Date(),
+      };
+      setMessages([testIntro]);
+    } else if (mode) {
+      // Start with mode-specific greeting
+      const modeIntro: Message = {
+        id: 'mode-intro',
+        text: `안녕하세요! ${mode.name} 모드로 상담을 시작하겠습니다.\n\n${mode.description}\n\n어떤 고민이 있으신가요?`,
+        sender: 'ai',
+        timestamp: new Date(),
+      };
+      setMessages([modeIntro]);
+    } else {
+      // Default mode
+      const defaultIntro: Message = {
+        id: 'default-intro',
+        text: '안녕하세요! 저는 오늘 당신의 이야기를 들어줄 상담 AI예요.',
+        sender: 'ai',
+        timestamp: new Date(),
+      };
+      setMessages([defaultIntro]);
     }
-  }, [user, sessions.length, initialQuestions, loadSessions]);
+  };
 
   // Load sessions on mount
   useEffect(() => {
@@ -283,8 +511,10 @@ const Chat: React.FC = () => {
       // If no session exists yet, create one first
       if (!currentSessionId) {
         const sessionNumber = sessions.length + 1;
-        const title = `채팅 ${sessionNumber}`;
-        
+        const title = selectedTest ? `${selectedTest.name} - 채팅 ${sessionNumber}` : 
+                     selectedMode ? `${selectedMode.name} - 채팅 ${sessionNumber}` : 
+                     `채팅 ${sessionNumber}`;
+
         // Create new session in Supabase
         const { data: session, error } = await ChatService.createSession({
           title,
@@ -300,17 +530,39 @@ const Chat: React.FC = () => {
           setSessionId(session.id);
           setCurrentSession(session);
           currentSessionId = session.id;
-          
+
           // Start backend conversation
           await apiService.startConversation();
-          
+
           // Refresh sessions list
           await loadSessions();
         }
       }
 
-      // Send to backend for AI response
-      const response = await apiService.sendMessage(inputText, currentSessionId || '');
+      // Determine the system prompt based on selected mode
+      let systemPrompt = aiModes[0].systemPrompt; // Default
+      if (selectedMode) {
+        systemPrompt = selectedMode.systemPrompt;
+      } else if (selectedTest) {
+        // Test-specific system prompt
+        systemPrompt = `당신은 ${selectedTest.name}를 진행하는 전문 상담사입니다.
+
+테스트 진행 방법:
+1. ${selectedTest.questions.length}개의 질문을 순서대로 하나씩 진행합니다
+2. 각 질문에 대해 사용자의 응답을 듣고 적절한 반응을 보여주세요
+3. 테스트가 완료되면 결과를 해석하고 권장사항을 제공하세요
+4. 위험한 응답이 감지되면 즉시 전문가 상담을 권유하세요
+
+${selectedTest.scoringMethod}
+
+응답 스타일:
+- 따뜻하고 전문적인 태도로 응답하세요
+- 마크다운 형식(**굵게**, ## 제목 등)을 사용하지 마세요
+- 특수문자나 포맷팅 없이 일반 텍스트로만 응답하세요`;
+      }
+
+      // Send to backend for AI response with custom system prompt
+      const response = await apiService.sendMessage(inputText, currentSessionId || '', systemPrompt);
       
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -1248,6 +1500,118 @@ ${recommendation}`;
           <Button onClick={handleDownloadPDF} variant="contained" startIcon={<DownloadIcon />}>
             PDF로 다운로드
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Mode Selection Dialog */}
+      <Dialog
+        open={modeSelectionOpen}
+        onClose={() => setModeSelectionOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>새로운 상담 시작</DialogTitle>
+        <DialogContent>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+            <Tabs value={currentTab} onChange={(e, newValue) => setCurrentTab(newValue)}>
+              <Tab label="기본" />
+              <Tab label="모드" />
+              <Tab label="테스트" />
+            </Tabs>
+          </Box>
+          
+          {currentTab === 0 && (
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                기본 상담사
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                전문적이고 따뜻한 AI 상담사와 자유롭게 대화하세요.
+              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<PsychologyIcon />}
+                onClick={() => handleModeSelection(null, null)}
+                fullWidth
+              >
+                기본 상담 시작
+              </Button>
+            </Box>
+          )}
+          
+          {currentTab === 1 && (
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                AI 모드 선택
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                원하는 스타일의 AI 상담사를 선택하세요.
+              </Typography>
+              <Grid container spacing={2}>
+                {aiModes.slice(1).map((mode) => (
+                  <Grid item xs={12} sm={6} key={mode.id}>
+                    <Card 
+                      sx={{ 
+                        cursor: 'pointer',
+                        '&:hover': { boxShadow: 4 }
+                      }}
+                      onClick={() => handleModeSelection(mode, null)}
+                    >
+                      <CardContent>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                          {mode.icon}
+                          <Typography variant="h6">{mode.name}</Typography>
+                        </Box>
+                        <Typography variant="body2" color="text.secondary">
+                          {mode.description}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
+          )}
+          
+          {currentTab === 2 && (
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                심리 테스트
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                전문적인 심리 테스트를 AI와 함께 진행하세요.
+              </Typography>
+              <Grid container spacing={2}>
+                {psychologicalTests.map((test) => (
+                  <Grid item xs={12} key={test.id}>
+                    <Card 
+                      sx={{ 
+                        cursor: 'pointer',
+                        '&:hover': { boxShadow: 4 }
+                      }}
+                      onClick={() => handleModeSelection(null, test)}
+                    >
+                      <CardContent>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                          <PsychologyIcon />
+                          <Typography variant="h6">{test.name}</Typography>
+                        </Box>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                          {test.description}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {test.questions.length}개 문항 • {test.scoringMethod}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setModeSelectionOpen(false)}>취소</Button>
         </DialogActions>
       </Dialog>
     </Box>
