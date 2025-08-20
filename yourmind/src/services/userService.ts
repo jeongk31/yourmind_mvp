@@ -6,6 +6,8 @@ export interface CreateUserProfileData {
   email: string;
   password: string;
   avatarColor: string;
+  phone?: string;
+  location?: string;
 }
 
 export interface UpdateUserProfileData {
@@ -13,6 +15,8 @@ export interface UpdateUserProfileData {
   email?: string;
   password?: string;
   avatarColor?: string;
+  phone?: string;
+  location?: string;
 }
 
 export interface LoginData {
@@ -43,6 +47,8 @@ export class UserService {
           email: data.email,
           password_hash: this.hashPassword(data.password),
           avatar_color: data.avatarColor,
+          phone: data.phone,
+          location: data.location,
         }
       ])
       .select()
@@ -99,6 +105,8 @@ export class UserService {
     if (data.email) updateData.email = data.email;
     if (data.password) updateData.password_hash = this.hashPassword(data.password);
     if (data.avatarColor) updateData.avatar_color = data.avatarColor;
+    if (data.phone) updateData.phone = data.phone;
+    if (data.location) updateData.location = data.location;
 
     const { data: profile, error } = await supabase
       .from('user_profiles')

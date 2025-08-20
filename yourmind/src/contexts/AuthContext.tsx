@@ -5,7 +5,7 @@ import { UserService } from '../services/userService';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signUp: (name: string, email: string, password: string, avatarColor: string) => Promise<{ error: any }>;
+  signUp: (name: string, email: string, password: string, avatarColor: string, phone?: string, location?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   refreshUserProfile: () => Promise<void>;
@@ -48,7 +48,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const signUp = async (name: string, email: string, password: string, avatarColor: string) => {
+  const signUp = async (name: string, email: string, password: string, avatarColor: string, phone?: string, location?: string) => {
     try {
       // Check if email already exists
       const { exists, error: checkError } = await UserService.checkEmailExists(email);
@@ -67,6 +67,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         email,
         password,
         avatarColor,
+        phone,
+        location,
       });
 
       if (error) {
@@ -80,6 +82,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           name: profile.name,
           email: profile.email,
           avatar_color: profile.avatar_color,
+          location: profile.location,
+          phone: profile.phone,
+          stress_level: profile.stress_level,
+          anxiety_level: profile.anxiety_level,
+          depression_level: profile.depression_level,
           created_at: profile.created_at,
           updated_at: profile.updated_at,
         };
@@ -114,6 +121,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         name: profile.name,
         email: profile.email,
         avatar_color: profile.avatar_color,
+        location: profile.location,
+        phone: profile.phone,
+        stress_level: profile.stress_level,
+        anxiety_level: profile.anxiety_level,
+        depression_level: profile.depression_level,
         created_at: profile.created_at,
         updated_at: profile.updated_at,
       };

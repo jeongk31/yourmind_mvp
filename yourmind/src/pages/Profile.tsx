@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Box,
@@ -33,85 +33,104 @@ import {
   History as HistoryIcon,
   Close as CloseIcon,
 } from '@mui/icons-material';
-
-interface UserProfile {
-  name: string;
-  age: number;
-  gender: string;
-  location: string;
-  phone: string;
-  email: string;
-  joinDate: Date;
-  totalSessions: number;
-  currentMood: string;
-  stressLevel: number;
-  anxietyLevel: number;
-  depressionLevel: number;
-}
+import { useAuth } from '../contexts/AuthContext';
+import { ChatService } from '../services/chatService';
+import { ChatSession } from '../lib/supabase';
+import { UserService } from '../services/userService';
+import AvatarColorPicker from '../components/auth/AvatarColorPicker';
 
 interface SessionRecord {
   id: string;
   date: Date;
-  duration: number;
-  summary: string;
-  mood: string;
-  recommendations: string[];
+  title: string;
+  summary?: string;
 }
 
 const Profile: React.FC = () => {
-  const [profile, setProfile] = useState<UserProfile>({
-    name: '김상담',
-    age: 28,
-    gender: '여성',
-    location: '서울시 강남구',
-    phone: '010-1234-5678',
-    email: 'counseling@example.com',
-    joinDate: new Date('2024-01-15'),
-    totalSessions: 12,
-    currentMood: '보통',
-    stressLevel: 65,
-    anxietyLevel: 45,
-    depressionLevel: 30,
-  });
-
-  const [sessions] = useState<SessionRecord[]>([
-    {
-      id: '1',
-      date: new Date('2024-03-15'),
-      duration: 45,
-      summary: '직장 스트레스와 인간관계에 대한 상담을 진행했습니다.',
-      mood: '스트레스',
-      recommendations: ['호흡 운동', '시간 관리', '경계 설정'],
-    },
-    {
-      id: '2',
-      date: new Date('2024-03-10'),
-      duration: 30,
-      summary: '수면 문제와 불안감에 대한 상담을 진행했습니다.',
-      mood: '불안',
-      recommendations: ['수면 위생', '명상', '규칙적인 운동'],
-    },
-    {
-      id: '3',
-      date: new Date('2024-03-05'),
-      duration: 60,
-      summary: '가족 관계와 소통 문제에 대한 상담을 진행했습니다.',
-      mood: '우울',
-      recommendations: ['감정 표현 연습', '가족 상담', '자기 돌봄'],
-    },
-  ]);
-
+  const { user } = useAuth();
+  const [sessions, setSessions] = useState<SessionRecord[]>([]);
+  const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editProfile, setEditProfile] = useState<UserProfile>(profile);
+  const [editName, setEditName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editLocation, setEditLocation] = useState('');
+  const [editAvatarColor, setEditAvatarColor] = useState('#3B82F6');
 
-  const handleEditSave = () => {
-    setProfile(editProfile);
+  // Load user sessions
+  useEffect(() => {
+    const loadUserSessions = async () => {
+      if (!user) return;
+      
+      try {
+        const { data: userSessions } = await ChatService.getSessions(user.id);
+        if (userSessions) {
+          const formattedSessions = userSessions.map(session => ({
+            id: session.id,
+            date: new Date(session.created_at),
+            title: session.title,
+          }));
+          setSessions(formattedSessions);
+        }
+      } catch (error) {
+        console.error('Error loading sessions:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserSessions();
+  }, [user]);
+
+  // Initialize edit form
+  useEffect(() => {
+    if (user) {
+      setEditName(user.name);
+      setEditPhone(user.phone || '');
+      setEditLocation(user.location || '');
+      setEditAvatarColor(user.avatar_color);
+    }
+  }, [user]);
+
+  const handleEditProfile = async () => {
+    if (!user) return;
+
+    try {
+      // Update user profile with all fields
+      const { error } = await UserService.updateProfile(user.id, {
+        name: editName,
+        phone: editPhone,
+        location: editLocation,
+        avatarColor: editAvatarColor,
+      });
+
+      if (error) {
+        console.error('Failed to update profile:', error);
+        // You might want to show an error message to the user
+      } else {
+        // Update local user data
+        const updatedUser = {
+          ...user,
+          name: editName,
+          phone: editPhone,
+          location: editLocation,
+          avatar_color: editAvatarColor,
+        };
+        localStorage.setItem('yourmind_user', JSON.stringify(updatedUser));
+        window.location.reload(); // Refresh to show updated data
+      }
+    } catch (err) {
+      console.error('Error updating profile:', err);
+    }
+
     setEditDialogOpen(false);
   };
 
-  const handleEditCancel = () => {
-    setEditProfile(profile);
-    setEditDialogOpen(false);
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
   };
 
   const getMoodColor = (mood: string) => {
@@ -152,22 +171,47 @@ const Profile: React.FC = () => {
                     fontSize: '3rem',
                   }}
                 >
-                  {profile.name.charAt(0)}
+                  {user?.name?.charAt(0) || 'U'}
                 </Avatar>
                 <Typography variant="h4" sx={{ mb: 1, fontWeight: 600 }}>
-                  {profile.name}
+                  {user?.name || '사용자'}
                 </Typography>
                 <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                  {profile.age}세, {profile.gender}
+                  {user?.email}
                 </Typography>
                 
                 <Box sx={{ mb: 3 }}>
                   <Chip
-                    label={`현재 기분: ${profile.currentMood}`}
-                    color={getMoodColor(profile.currentMood) as any}
+                    label="활성 사용자"
+                    color="success"
                     variant="outlined"
                     sx={{ fontSize: '1rem', py: 1 }}
                   />
+                </Box>
+                
+                <Box sx={{ mb: 4 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <EmailIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                    <Typography variant="body2">{user?.email || '이메일 정보 없음'}</Typography>
+                  </Box>
+                  {user?.location && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      <LocationIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                      <Typography variant="body2">{user.location}</Typography>
+                    </Box>
+                  )}
+                  {user?.phone && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      <PhoneIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                      <Typography variant="body2">{user.phone}</Typography>
+                    </Box>
+                  )}
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <CalendarIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                    <Typography variant="body2">
+                      가입일: {user?.created_at ? formatDate(new Date(user.created_at)) : '날짜 정보 없음'}
+                    </Typography>
+                  </Box>
                 </Box>
 
                 <Button
@@ -178,29 +222,6 @@ const Profile: React.FC = () => {
                 >
                   프로필 수정
                 </Button>
-
-                <Divider sx={{ my: 2 }} />
-
-                <Box sx={{ textAlign: 'left' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <LocationIcon sx={{ mr: 1, color: 'text.secondary' }} />
-                    <Typography variant="body2">{profile.location}</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <PhoneIcon sx={{ mr: 1, color: 'text.secondary' }} />
-                    <Typography variant="body2">{profile.phone}</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <EmailIcon sx={{ mr: 1, color: 'text.secondary' }} />
-                    <Typography variant="body2">{profile.email}</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <CalendarIcon sx={{ mr: 1, color: 'text.secondary' }} />
-                    <Typography variant="body2">
-                      가입일: {profile.joinDate.toLocaleDateString('ko-KR')}
-                    </Typography>
-                  </Box>
-                </Box>
               </CardContent>
             </Card>
           </motion.div>
@@ -230,12 +251,12 @@ const Profile: React.FC = () => {
                     </Typography>
                     <LinearProgress
                       variant="determinate"
-                      value={profile.stressLevel}
-                      color={getLevelColor(profile.stressLevel) as any}
+                      value={user?.stress_level || 0}
+                      color={getLevelColor(user?.stress_level || 0) as any}
                       sx={{ height: 8, borderRadius: 4, mb: 1 }}
                     />
                     <Typography variant="body2" fontWeight={600}>
-                      {profile.stressLevel}%
+                      {user?.stress_level || 0}%
                     </Typography>
                   </Box>
                   <Box>
@@ -244,12 +265,12 @@ const Profile: React.FC = () => {
                     </Typography>
                     <LinearProgress
                       variant="determinate"
-                      value={profile.anxietyLevel}
-                      color={getLevelColor(profile.anxietyLevel) as any}
+                      value={user?.anxiety_level || 0}
+                      color={getLevelColor(user?.anxiety_level || 0) as any}
                       sx={{ height: 8, borderRadius: 4, mb: 1 }}
                     />
                     <Typography variant="body2" fontWeight={600}>
-                      {profile.anxietyLevel}%
+                      {user?.anxiety_level || 0}%
                     </Typography>
                   </Box>
                   <Box>
@@ -258,12 +279,12 @@ const Profile: React.FC = () => {
                     </Typography>
                     <LinearProgress
                       variant="determinate"
-                      value={profile.depressionLevel}
-                      color={getLevelColor(profile.depressionLevel) as any}
+                      value={user?.depression_level || 0}
+                      color={getLevelColor(user?.depression_level || 0) as any}
                       sx={{ height: 8, borderRadius: 4, mb: 1 }}
                     />
                     <Typography variant="body2" fontWeight={600}>
-                      {profile.depressionLevel}%
+                      {user?.depression_level || 0}%
                     </Typography>
                   </Box>
                 </Box>
@@ -275,66 +296,62 @@ const Profile: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
           >
             <Card>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                   <HistoryIcon sx={{ mr: 1, color: 'primary.main' }} />
                   <Typography variant="h5" fontWeight={600}>
-                    상담 기록 ({profile.totalSessions}회)
+                    상담 기록 ({sessions.length}회)
                   </Typography>
                 </Box>
 
-                <List>
-                  {sessions.map((session, index) => (
-                    <React.Fragment key={session.id}>
-                      <ListItem alignItems="flex-start">
-                        <ListItemAvatar>
-                          <Avatar sx={{ bgcolor: 'primary.main' }}>
-                            <PsychologyIcon />
-                          </Avatar>
-                        </ListItemAvatar>
-                        <ListItemText
-                          primary={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                              <Typography variant="subtitle1" fontWeight={600}>
-                                {session.date.toLocaleDateString('ko-KR')}
-                              </Typography>
-                              <Chip
-                                label={session.mood}
-                                color={getMoodColor(session.mood) as any}
-                                size="small"
-                              />
-                              <Typography variant="body2" color="text.secondary">
-                                ({session.duration}분)
-                              </Typography>
-                            </Box>
-                          }
-                          secondary={
-                            <Box>
-                              <Typography variant="body2" sx={{ mb: 1 }}>
-                                {session.summary}
-                              </Typography>
-                              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                {session.recommendations.map((rec, idx) => (
-                                  <Chip
-                                    key={idx}
-                                    label={rec}
-                                    variant="outlined"
-                                    size="small"
-                                    color="primary"
-                                  />
-                                ))}
+                {loading ? (
+                  <Box sx={{ textAlign: 'center', py: 4 }}>
+                    <Typography variant="body1">로딩 중...</Typography>
+                  </Box>
+                ) : sessions.length === 0 ? (
+                  <Box sx={{ textAlign: 'center', py: 4 }}>
+                    <Typography variant="body1">상담 기록이 없습니다.</Typography>
+                  </Box>
+                ) : (
+                  <List>
+                    {sessions.map((session, index) => (
+                      <React.Fragment key={session.id}>
+                        <ListItem alignItems="flex-start">
+                          <ListItemAvatar>
+                            <Avatar sx={{ bgcolor: 'primary.main' }}>
+                              <PsychologyIcon />
+                            </Avatar>
+                          </ListItemAvatar>
+                          <ListItemText
+                            primary={
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                <Typography variant="subtitle1" fontWeight={600}>
+                                  {formatDate(session.date)}
+                                </Typography>
+                                <Chip
+                                  label={session.title}
+                                  color="primary"
+                                  size="small"
+                                />
                               </Box>
-                            </Box>
-                          }
-                        />
-                      </ListItem>
-                      {index < sessions.length - 1 && <Divider variant="inset" component="li" />}
-                    </React.Fragment>
-                  ))}
-                </List>
+                            }
+                            secondary={
+                              <Box>
+                                <Typography variant="body2" sx={{ mb: 1 }}>
+                                  {session.summary || '상담 내용 없음'}
+                                </Typography>
+                              </Box>
+                            }
+                          />
+                        </ListItem>
+                        {index < sessions.length - 1 && <Divider variant="inset" component="li" />}
+                      </React.Fragment>
+                    ))}
+                  </List>
+                )}
               </CardContent>
             </Card>
           </motion.div>
@@ -342,60 +359,51 @@ const Profile: React.FC = () => {
       </Box>
 
       {/* Edit Profile Dialog */}
-      <Dialog open={editDialogOpen} onClose={handleEditCancel} maxWidth="sm" fullWidth>
+      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Typography variant="h6">프로필 수정</Typography>
-            <IconButton onClick={handleEditCancel}>
+            <IconButton onClick={() => setEditDialogOpen(false)}>
               <CloseIcon />
             </IconButton>
           </Box>
         </DialogTitle>
         <DialogContent>
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 2, mt: 1 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
             <TextField
               fullWidth
               label="이름"
-              value={editProfile.name}
-              onChange={(e) => setEditProfile({ ...editProfile, name: e.target.value })}
-            />
-            <TextField
-              fullWidth
-              label="나이"
-              type="number"
-              value={editProfile.age}
-              onChange={(e) => setEditProfile({ ...editProfile, age: parseInt(e.target.value) })}
-            />
-            <TextField
-              fullWidth
-              label="성별"
-              value={editProfile.gender}
-              onChange={(e) => setEditProfile({ ...editProfile, gender: e.target.value })}
-            />
-            <TextField
-              fullWidth
-              label="지역"
-              value={editProfile.location}
-              onChange={(e) => setEditProfile({ ...editProfile, location: e.target.value })}
-            />
-            <TextField
-              fullWidth
-              label="전화번호"
-              value={editProfile.phone}
-              onChange={(e) => setEditProfile({ ...editProfile, phone: e.target.value })}
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
             />
             <TextField
               fullWidth
               label="이메일"
               type="email"
-              value={editProfile.email}
-              onChange={(e) => setEditProfile({ ...editProfile, email: e.target.value })}
+              value={user?.email || ''}
+              disabled
+            />
+            <TextField
+              fullWidth
+              label="전화번호"
+              value={editPhone}
+              onChange={(e) => setEditPhone(e.target.value)}
+            />
+            <TextField
+              fullWidth
+              label="위치"
+              value={editLocation}
+              onChange={(e) => setEditLocation(e.target.value)}
+            />
+            <AvatarColorPicker
+              selectedColor={editAvatarColor}
+              onColorSelect={(color) => setEditAvatarColor(color)}
             />
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleEditCancel}>취소</Button>
-          <Button onClick={handleEditSave} variant="contained">저장</Button>
+          <Button onClick={() => setEditDialogOpen(false)}>취소</Button>
+          <Button onClick={handleEditProfile} variant="contained">저장</Button>
         </DialogActions>
       </Dialog>
     </Container>

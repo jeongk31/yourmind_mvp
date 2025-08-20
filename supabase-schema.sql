@@ -1,10 +1,15 @@
 -- Create users table for user profiles
-CREATE TABLE IF NOT EXISTS user_profiles (
+CREATE TABLE user_profiles (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
   avatar_color TEXT DEFAULT '#3B82F6',
+  location TEXT,
+  phone TEXT,
+  stress_level INTEGER DEFAULT 0,
+  anxiety_level INTEGER DEFAULT 0,
+  depression_level INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

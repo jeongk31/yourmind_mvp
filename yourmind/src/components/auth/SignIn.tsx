@@ -18,6 +18,7 @@ const SignIn: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const { signIn } = useAuth();
   const navigate = useNavigate();
@@ -40,7 +41,10 @@ const SignIn: React.FC = () => {
       if (signInError) {
         setError(signInError.message);
       } else {
-        navigate('/chat');
+        setSuccess(true);
+        setTimeout(() => {
+          navigate('/');
+        }, 2000);
       }
     } catch (err) {
       setError('로그인 중 오류가 발생했습니다.');

@@ -16,6 +16,11 @@ export interface UserProfile {
   email: string;
   password_hash: string;
   avatar_color: string;
+  location?: string;
+  phone?: string;
+  stress_level: number;
+  anxiety_level: number;
+  depression_level: number;
   created_at: string;
   updated_at: string;
 }
@@ -25,6 +30,11 @@ export interface User {
   name: string;
   email: string;
   avatar_color: string;
+  location?: string;
+  phone?: string;
+  stress_level: number;
+  anxiety_level: number;
+  depression_level: number;
   created_at: string;
   updated_at: string;
 }

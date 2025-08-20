@@ -50,6 +50,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { ChatSession } from '../lib/supabase';
 import { apiService } from '../utils/api';
 import { ChatService } from '../services/chatService';
+import { useLocation } from 'react-router-dom';
 
 interface Message {
   id: string;
@@ -77,10 +78,12 @@ interface Test {
   description: string;
   questions: string[];
   scoringMethod: string;
+  timeEstimate?: string;
 }
 
 const Chat: React.FC = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -102,41 +105,22 @@ const Chat: React.FC = () => {
   const [selectedMode, setSelectedMode] = useState<AIMode | null>(null);
   const [selectedTest, setSelectedTest] = useState<Test | null>(null);
   const [currentTab, setCurrentTab] = useState(0); // 0: Default, 1: Modes, 2: Tests
+  const [testState, setTestState] = useState<{
+    currentQuestion: number;
+    answers: number[];
+    isActive: boolean;
+    testStarted: boolean;
+  }>({
+    currentQuestion: 0,
+    answers: [],
+    isActive: false,
+    testStarted: false,
+  });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // AI Modes
   const aiModes: AIMode[] = [
-    {
-      id: 'default',
-      name: '기본 상담사',
-      description: '전문적이고 따뜻한 AI 상담사',
-      icon: <PsychologyIcon />,
-      systemPrompt: `당신은 "유어마인드"의 AI 상담사입니다. 따뜻하고 전문적인 심리 상담을 제공하는 것이 목표입니다.
-
-상담사로서의 역할:
-1. 공감적이고 따뜻한 태도로 응답하세요
-2. 사용자의 감정을 인정하고 이해한다는 것을 표현하세요
-3. 전문적이면서도 접근하기 쉬운 언어를 사용하세요
-4. 위험한 상황(자해, 타해 등)이 감지되면 즉시 전문가 상담을 권유하세요
-5. 구체적이고 실용적인 조언을 제공하세요
-6. 상담의 경계를 유지하되, 따뜻한 지지를 제공하세요
-
-응답 스타일:
-- 한국어로 응답하세요
-- 존댓말을 사용하되 너무 딱딱하지 않게 하세요
-- 사용자의 감정을 반영하는 표현을 사용하세요
-- 필요시 적절한 질문을 통해 더 깊은 대화를 이끌어내세요
-- 위험 신호가 감지되면 즉시 전문가 상담을 강력히 권유하세요
-- 마크다운 형식(**굵게**, ## 제목 등)을 사용하지 마세요
-- 특수문자나 포맷팅 없이 일반 텍스트로만 응답하세요
-
-주의사항:
-- 의학적 진단이나 처방을 하지 마세요
-- 약물 복용에 대한 구체적인 조언을 하지 마세요
-- 심각한 정신 건강 문제의 경우 전문가 상담을 권유하세요
-- 개인정보나 민감한 정보를 요구하지 마세요`
-    },
     {
       id: 'friendly',
       name: '친구같은',
@@ -168,68 +152,38 @@ const Chat: React.FC = () => {
 - 제안할 때는 자연스럽고 부담스럽지 않게 하세요`
     },
     {
-      id: 'direct',
-      name: '직설적인',
-      description: '솔직하고 직접적인 조언',
-      icon: <StraightenIcon />,
-      systemPrompt: `당신은 솔직하고 직접적인 상담사입니다. 핵심을 짚어주고 실용적인 조언을 제공하세요.
+      id: 'teacher',
+      name: '선생님같은',
+      description: '지혜롭고 가르치는 듯한 조언',
+      icon: <PsychologyIcon />,
+      systemPrompt: `당신은 지혜롭고 경험 많은 선생님입니다. 가르치고 안내하는 방식으로 상담하세요.
 
-직설적 상담사로서의 역할:
-1. 핵심 문제를 정확히 파악하고 지적하세요
-2. 솔직하고 직접적인 피드백을 제공하세요
-3. 실용적이고 구체적인 해결책을 제시하세요
-4. 감정적 위로보다는 실질적인 도움에 집중하세요
-5. 현실적이고 가능한 조언을 해주세요
+선생님으로서의 역할:
+1. 지혜롭고 경험 기반의 조언을 제공하세요
+2. 가르치고 안내하는 방식으로 접근하세요
+3. 원리와 이유를 설명해주세요
+4. 성장과 학습을 장려하세요
+5. 인내심을 가지고 단계적으로 도와주세요
 
 응답 스타일:
-- 솔직하고 직접적으로 말하세요
-- 핵심을 짚어주세요
-- 실용적인 조언을 제공하세요
-- 감정적이기보다는 논리적으로 접근하세요
+- 존댓말을 사용하되 따뜻하게 하세요
+- 원리와 이유를 설명해주세요
+- 경험 기반의 조언을 제공하세요
+- 성장을 장려하는 말을 하세요
 - 마크다운 형식(**굵게**, ## 제목 등)을 사용하지 마세요
 - 특수문자나 포맷팅 없이 일반 텍스트로만 응답하세요
 
 주의사항:
-- 너무 냉정하지 않게 하세요
+- 너무 딱딱하지 않게 하세요
 - 위험한 상황은 여전히 진지하게 다루세요
 
 테스트 제안:
 - 대화 중 우울, 불안, 자살 관련 내용이 감지되면 적절한 심리 테스트를 제안하세요
-- 제안할 때는 직접적이고 명확하게 하세요`
+- 제안할 때는 교육적이고 안내하는 방식으로 하세요`
     },
     {
-      id: 'realistic',
-      name: '현실적인',
-      description: '현실적이고 실용적인 관점',
-      icon: <TrendingUpIcon />,
-      systemPrompt: `당신은 현실적이고 실용적인 상담사입니다. 현실을 직시하고 실현 가능한 해결책을 제시하세요.
-
-현실적 상담사로서의 역할:
-1. 현실을 직시하고 인정하세요
-2. 실현 가능한 목표와 해결책을 제시하세요
-3. 단계적이고 구체적인 접근 방법을 제안하세요
-4. 장기적인 관점에서 조언하세요
-5. 현실적인 기대치를 설정하도록 도와주세요
-
-응답 스타일:
-- 현실적이고 실용적으로 접근하세요
-- 구체적이고 실현 가능한 조언을 제공하세요
-- 단계별 접근 방법을 제시하세요
-- 장기적인 관점을 유지하세요
-- 마크다운 형식(**굵게**, ## 제목 등)을 사용하지 마세요
-- 특수문자나 포맷팅 없이 일반 텍스트로만 응답하세요
-
-주의사항:
-- 너무 비관적이지 않게 하세요
-- 희망을 주되 현실적이게 하세요
-
-테스트 제안:
-- 대화 중 우울, 불안, 자살 관련 내용이 감지되면 적절한 심리 테스트를 제안하세요
-- 제안할 때는 현실적이고 실용적인 관점에서 하세요`
-    },
-    {
-      id: 'f_tendency',
-      name: 'F성향을 위한',
+      id: 'f_empathy',
+      name: 'F를 위한 공감형',
       description: '감정적이고 공감적인 접근',
       icon: <FavoriteIcon />,
       systemPrompt: `당신은 F성향(감정형) 사람들을 위한 상담사입니다. 감정적이고 공감적인 접근을 하세요.
@@ -256,6 +210,36 @@ F성향 상담사로서의 역할:
 테스트 제안:
 - 대화 중 우울, 불안, 자살 관련 내용이 감지되면 적절한 심리 테스트를 제안하세요
 - 제안할 때는 따뜻하고 공감적으로 하세요`
+    },
+    {
+      id: 'rational',
+      name: '이성적인',
+      description: '논리적이고 분석적인 관점',
+      icon: <TrendingUpIcon />,
+      systemPrompt: `당신은 논리적이고 분석적인 상담사입니다. 객관적이고 체계적인 접근을 하세요.
+
+이성적 상담사로서의 역할:
+1. 객관적이고 논리적으로 분석하세요
+2. 체계적이고 구조화된 접근을 하세요
+3. 데이터와 사실에 기반한 조언을 제공하세요
+4. 원인과 결과를 명확히 설명하세요
+5. 효율적이고 실용적인 해결책을 제시하세요
+
+응답 스타일:
+- 논리적이고 체계적으로 접근하세요
+- 객관적이고 분석적인 관점을 제공하세요
+- 원인과 결과를 명확히 설명하세요
+- 효율적이고 실용적인 조언을 하세요
+- 마크다운 형식(**굵게**, ## 제목 등)을 사용하지 마세요
+- 특수문자나 포맷팅 없이 일반 텍스트로만 응답하세요
+
+주의사항:
+- 너무 냉정하지 않게 하세요
+- 감정적 측면도 고려하세요
+
+테스트 제안:
+- 대화 중 우울, 불안, 자살 관련 내용이 감지되면 적절한 심리 테스트를 제안하세요
+- 제안할 때는 논리적이고 체계적으로 하세요`
     }
   ];
 
@@ -265,6 +249,7 @@ F성향 상담사로서의 역할:
       id: 'phq9',
       name: 'PHQ-9 우울증 테스트',
       description: '9개 문항으로 구성된 우울증 선별 도구',
+      timeEstimate: '약 5-10분',
       questions: [
         '기분이 가라앉거나, 우울하거나, 희망이 없다고 느꼈나요?',
         '평소에 하던 일에 대한 흥미가 없어지거나 즐거움을 느끼지 못했나요?',
@@ -282,6 +267,7 @@ F성향 상담사로서의 역할:
       id: 'gad7',
       name: 'GAD-7 불안장애 테스트',
       description: '7개 문항으로 구성된 불안장애 선별 도구',
+      timeEstimate: '약 3-7분',
       questions: [
         '긴장하거나, 불안하거나, 가장자리에 앉아있는 것 같은 느낌',
         '걱정하거나 걱정할 일이 너무 많음',
@@ -297,6 +283,7 @@ F성향 상담사로서의 역할:
       id: 'cssrs',
       name: 'C-SSRS 자살위험 테스트',
       description: '자살 사고와 행동을 평가하는 도구',
+      timeEstimate: '약 5-8분',
       questions: [
         '죽고 싶다는 생각이 들었나요?',
         '자신을 해치고 싶다는 생각이 들었나요?',
@@ -404,6 +391,14 @@ F성향 상담사로서의 역할:
     
     // Set initial messages based on selection
     if (test) {
+      // Initialize test state
+      setTestState({
+        currentQuestion: 0,
+        answers: [],
+        isActive: true,
+        testStarted: false,
+      });
+      
       // Start with test introduction
       const testIntro: Message = {
         id: 'test-intro',
@@ -575,6 +570,95 @@ F성향 상담사로서의 역할:
       return;
     }
 
+    // Handle test responses
+    if (selectedTest && testState.isActive) {
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        text: inputText,
+        sender: 'user',
+        timestamp: new Date(),
+      };
+
+      setMessages(prev => [...prev, userMessage]);
+      setInputText('');
+
+      // Check if user wants to start the test
+      if (!testState.testStarted && (inputText.toLowerCase().includes('시작') || inputText.toLowerCase().includes('네'))) {
+        setTestState(prev => ({ ...prev, testStarted: true }));
+        
+        // Ask first question
+        const firstQuestion = selectedTest.questions[0];
+        const questionMessage: Message = {
+          id: 'question-0',
+          text: `1. ${firstQuestion}\n\n0: 전혀 없음\n1: 조금\n2: 보통\n3: 매우 자주\n\n답변해주세요.`,
+          sender: 'ai',
+          timestamp: new Date(),
+        };
+        
+        setMessages(prev => [...prev, questionMessage]);
+        
+        // Save question to Supabase
+        if (sessionId) {
+          await ChatService.saveMessage({
+            sessionId,
+            content: userMessage.text,
+            sender: 'user',
+          });
+          await ChatService.saveMessage({
+            sessionId,
+            content: questionMessage.text,
+            sender: 'ai',
+          });
+        }
+        return;
+      }
+
+      // Validate test response
+      if (testState.testStarted) {
+        const validation = validateTestResponse(inputText);
+        
+        if (validation.isValid && validation.score !== undefined) {
+          // Valid response - proceed to next question
+          handleTestProgression(validation.score);
+          
+          // Save user response to Supabase
+          if (sessionId) {
+            await ChatService.saveMessage({
+              sessionId,
+              content: userMessage.text,
+              sender: 'user',
+            });
+          }
+        } else {
+          // Invalid response - ask for clarification
+          const clarificationMessage: Message = {
+            id: `clarification-${Date.now()}`,
+            text: validation.message || '죄송합니다. 0, 1, 2, 3 중에서 선택해주세요.',
+            sender: 'ai',
+            timestamp: new Date(),
+          };
+          
+          setMessages(prev => [...prev, clarificationMessage]);
+          
+          // Save clarification to Supabase
+          if (sessionId) {
+            await ChatService.saveMessage({
+              sessionId,
+              content: userMessage.text,
+              sender: 'user',
+            });
+            await ChatService.saveMessage({
+              sessionId,
+              content: clarificationMessage.text,
+              sender: 'ai',
+            });
+          }
+        }
+        return;
+      }
+    }
+
+    // Regular conversation handling
     const userMessage: Message = {
       id: Date.now().toString(),
       text: inputText,
@@ -1097,6 +1181,14 @@ ${recommendation}`;
     setSelectedTest(test);
     setSelectedMode(null);
     
+    // Initialize test state
+    setTestState({
+      currentQuestion: 0,
+      answers: [],
+      isActive: true,
+      testStarted: false,
+    });
+    
     const testIntro: Message = {
       id: 'test-intro',
       text: `좋습니다! ${test.name}를 시작하겠습니다.\n\n${test.description}\n\n이 테스트는 ${test.questions.length}개의 질문으로 구성되어 있습니다. 각 질문에 솔직하게 답변해주시면 됩니다.\n\n준비되셨다면 "시작"이라고 말씀해주세요.`,
@@ -1115,6 +1207,154 @@ ${recommendation}`;
       });
     }
   };
+
+  // Function to validate test response
+  const validateTestResponse = (input: string): { isValid: boolean; score?: number; message?: string } => {
+    const lowerInput = input.toLowerCase().trim();
+    
+    // Check for valid score responses (0, 1, 2, 3)
+    if (lowerInput === '0' || lowerInput === '1' || lowerInput === '2' || lowerInput === '3') {
+      return { isValid: true, score: parseInt(lowerInput) };
+    }
+    
+    // Check for Korean number responses
+    const koreanNumbers: { [key: string]: number } = {
+      '영': 0, '일': 1, '이': 2, '삼': 3,
+      '하나': 1, '둘': 2, '셋': 3,
+      '없음': 0, '거의 없음': 1, '가끔': 2, '자주': 3,
+      '전혀': 0, '조금': 1, '보통': 2, '매우': 3
+    };
+    
+    for (const [korean, number] of Object.entries(koreanNumbers)) {
+      if (lowerInput.includes(korean)) {
+        return { isValid: true, score: number };
+      }
+    }
+    
+    // Check for descriptive responses
+    if (lowerInput.includes('전혀') || lowerInput.includes('없') || lowerInput.includes('안')) {
+      return { isValid: true, score: 0 };
+    } else if (lowerInput.includes('조금') || lowerInput.includes('가끔') || lowerInput.includes('약간')) {
+      return { isValid: true, score: 1 };
+    } else if (lowerInput.includes('보통') || lowerInput.includes('중간') || lowerInput.includes('어느 정도')) {
+      return { isValid: true, score: 2 };
+    } else if (lowerInput.includes('매우') || lowerInput.includes('자주') || lowerInput.includes('항상')) {
+      return { isValid: true, score: 3 };
+    }
+    
+    // Invalid response
+    return { 
+      isValid: false, 
+      message: '죄송합니다. 0, 1, 2, 3 중에서 선택해주세요. 또는 "전혀 없음", "조금", "보통", "매우 자주"와 같이 설명해주셔도 됩니다.' 
+    };
+  };
+
+  // Function to handle test progression
+  const handleTestProgression = (score: number) => {
+    if (!selectedTest) return;
+    
+    const newAnswers = [...testState.answers, score];
+    const nextQuestion = testState.currentQuestion + 1;
+    
+    setTestState(prev => ({
+      ...prev,
+      answers: newAnswers,
+      currentQuestion: nextQuestion,
+    }));
+    
+    if (nextQuestion < selectedTest.questions.length) {
+      // Ask next question
+      const nextQuestionText = selectedTest.questions[nextQuestion];
+      const questionMessage: Message = {
+        id: `question-${nextQuestion}`,
+        text: `${nextQuestion + 1}. ${nextQuestionText}\n\n0: 전혀 없음\n1: 조금\n2: 보통\n3: 매우 자주\n\n답변해주세요.`,
+        sender: 'ai',
+        timestamp: new Date(),
+      };
+      
+      setMessages(prev => [...prev, questionMessage]);
+      
+      // Save question to Supabase
+      if (sessionId) {
+        ChatService.saveMessage({
+          sessionId,
+          content: questionMessage.text,
+          sender: 'ai',
+        });
+      }
+    } else {
+      // Test completed - calculate results
+      const totalScore = newAnswers.reduce((sum, score) => sum + score, 0);
+      let resultMessage = '';
+      
+      if (selectedTest.id === 'phq9') {
+        if (totalScore <= 4) {
+          resultMessage = `테스트가 완료되었습니다!\n\n총점: ${totalScore}/27\n\n결과: 정상 범위입니다. 현재 우울 증상이 심하지 않은 것으로 보입니다.`;
+        } else if (totalScore <= 9) {
+          resultMessage = `테스트가 완료되었습니다!\n\n총점: ${totalScore}/27\n\n결과: 경미한 우울 증상이 있을 수 있습니다. 주의 깊게 관찰해보시고, 증상이 지속되면 전문가와 상담하시는 것을 권장합니다.`;
+        } else if (totalScore <= 14) {
+          resultMessage = `테스트가 완료되었습니다!\n\n총점: ${totalScore}/27\n\n결과: 중간 정도의 우울 증상이 있습니다. 전문가와 상담하시는 것을 강력히 권장합니다.`;
+        } else {
+          resultMessage = `테스트가 완료되었습니다!\n\n총점: ${totalScore}/27\n\n결과: 심한 우울 증상이 있습니다. 즉시 전문가와 상담하시는 것이 필요합니다.`;
+        }
+      } else if (selectedTest.id === 'gad7') {
+        if (totalScore <= 4) {
+          resultMessage = `테스트가 완료되었습니다!\n\n총점: ${totalScore}/21\n\n결과: 정상 범위입니다. 현재 불안 증상이 심하지 않은 것으로 보입니다.`;
+        } else if (totalScore <= 9) {
+          resultMessage = `테스트가 완료되었습니다!\n\n총점: ${totalScore}/21\n\n결과: 경미한 불안 증상이 있을 수 있습니다. 주의 깊게 관찰해보시고, 증상이 지속되면 전문가와 상담하시는 것을 권장합니다.`;
+        } else if (totalScore <= 14) {
+          resultMessage = `테스트가 완료되었습니다!\n\n총점: ${totalScore}/21\n\n결과: 중간 정도의 불안 증상이 있습니다. 전문가와 상담하시는 것을 강력히 권장합니다.`;
+        } else {
+          resultMessage = `테스트가 완료되었습니다!\n\n총점: ${totalScore}/21\n\n결과: 심한 불안 증상이 있습니다. 즉시 전문가와 상담하시는 것이 필요합니다.`;
+        }
+      }
+      
+      const resultMessageObj: Message = {
+        id: 'test-result',
+        text: resultMessage,
+        sender: 'ai',
+        timestamp: new Date(),
+      };
+      
+      setMessages(prev => [...prev, resultMessageObj]);
+      
+      // Reset test state
+      setTestState({
+        currentQuestion: 0,
+        answers: [],
+        isActive: false,
+        testStarted: false,
+      });
+      setSelectedTest(null);
+      
+      // Save result to Supabase
+      if (sessionId) {
+        ChatService.saveMessage({
+          sessionId,
+          content: resultMessage,
+          sender: 'ai',
+        });
+      }
+    }
+  };
+
+  // Handle selected service from navigation
+  useEffect(() => {
+    const selectedService = location.state?.selectedService;
+    if (selectedService) {
+      // Find the corresponding mode or test
+      const mode = aiModes.find(m => m.id === selectedService);
+      const test = psychologicalTests.find(t => t.id === selectedService);
+      
+      if (mode) {
+        handleModeSelection(mode, null);
+      } else if (test) {
+        handleModeSelection(null, test);
+      } else if (selectedService === 'default') {
+        handleModeSelection(null, null);
+      }
+    }
+  }, [location.state]);
 
   return (
     <Box sx={{ display: 'flex', height: 'calc(100vh - 120px)' }}>
@@ -1698,7 +1938,7 @@ ${recommendation}`;
                 원하는 스타일의 AI 상담사를 선택하세요.
               </Typography>
               <Grid container spacing={2}>
-                {aiModes.slice(1).map((mode) => (
+                {aiModes.map((mode) => (
                   <Grid item xs={12} sm={6} key={mode.id}>
                     <Card 
                       sx={{ 
@@ -1749,8 +1989,11 @@ ${recommendation}`;
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                           {test.description}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
                           {test.questions.length}개 문항 • {test.scoringMethod}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 500 }}>
+                          ⏱️ {test.timeEstimate}
                         </Typography>
                       </CardContent>
                     </Card>
