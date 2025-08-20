@@ -273,8 +273,39 @@ const Chat: React.FC = () => {
     setIsTyping(true);
 
     try {
+      let currentSessionId = sessionId;
+
+      // If no session exists yet, create one first
+      if (!currentSessionId) {
+        const sessionNumber = sessions.length + 1;
+        const title = `채팅 ${sessionNumber}`;
+        
+        // Create new session in Supabase
+        const { data: session, error } = await ChatService.createSession({
+          title,
+          userId: user.id,
+        });
+
+        if (error) {
+          console.error('Error creating session:', error);
+          throw new Error('세션을 생성할 수 없습니다.');
+        }
+
+        if (session) {
+          setSessionId(session.id);
+          setCurrentSession(session);
+          currentSessionId = session.id;
+          
+          // Start backend conversation
+          await apiService.startConversation();
+          
+          // Refresh sessions list
+          await loadSessions();
+        }
+      }
+
       // Send to backend for AI response
-      const response = await apiService.sendMessage(inputText, sessionId);
+      const response = await apiService.sendMessage(inputText, currentSessionId);
       
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -287,15 +318,15 @@ const Chat: React.FC = () => {
       setMessages(prev => [...prev, aiMessage]);
 
       // Save messages to Supabase if we have a session
-      if (sessionId) {
+      if (currentSessionId) {
         await ChatService.saveMessage({
-          sessionId,
+          sessionId: currentSessionId,
           content: inputText,
           sender: 'user',
         });
 
         await ChatService.saveMessage({
-          sessionId,
+          sessionId: currentSessionId,
           content: response.response,
           sender: 'ai',
           riskLevel: response.riskLevel,
