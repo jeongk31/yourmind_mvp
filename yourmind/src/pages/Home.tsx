@@ -262,21 +262,9 @@ const Home: React.FC = () => {
         
         {/* AI Modes - Horizontal Cards */}
         <Box sx={{ mb: 6 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 3 }}>
-            <Box
-              component="img"
-              src="/logo.png"
-              alt="유어마인드"
-              sx={{
-                width: 32,
-                height: 32,
-                borderRadius: '50%',
-              }}
-            />
-            <Typography variant="h5" sx={{ fontWeight: 600, color: 'secondary.main' }}>
-              AI 모드
-            </Typography>
-          </Box>
+          <Typography variant="h5" sx={{ textAlign: 'center', mb: 3, fontWeight: 600, color: 'secondary.main' }}>
+            AI 모드
+          </Typography>
           <Grid container spacing={2}>
             {chatServices.modes.map((service, index) => (
               <Grid item xs={12} sm={6} md={3} key={service.id}>
