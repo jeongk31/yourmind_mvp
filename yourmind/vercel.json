@@ -23,6 +23,22 @@
       "dest": "/manifest.json"
     },
     {
+      "src": "/logo.png",
+      "dest": "/logo.png"
+    },
+    {
+      "src": "/logo192.png",
+      "dest": "/logo192.png"
+    },
+    {
+      "src": "/logo512.png",
+      "dest": "/logo512.png"
+    },
+    {
+      "src": "/logo.svg",
+      "dest": "/logo.svg"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }
