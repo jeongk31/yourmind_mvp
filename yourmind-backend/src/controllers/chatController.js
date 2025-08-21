@@ -1,4 +1,4 @@
-const { openai, COUNSELING_SYSTEM_PROMPT } = require('../config/openai');
+const { generateResponse, COUNSELING_SYSTEM_PROMPT } = require('../config/ai');
 
 // In-memory storage for conversation history (in production, use a database)
 const conversationHistory = new Map();
@@ -40,17 +40,8 @@ const chatController = {
         content: message
       });
 
-      // Call OpenAI API
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: conversation,
-        max_tokens: 1000,
-        temperature: 0.7,
-        presence_penalty: 0.1,
-        frequency_penalty: 0.1
-      });
-
-      const aiResponse = completion.choices[0].message.content;
+      // Call Mental FLAN-T5 API instead of OpenAI
+      const aiResponse = await generateResponse(conversation, systemPrompt || COUNSELING_SYSTEM_PROMPT);
 
       // Add AI response to conversation
       conversation.push({

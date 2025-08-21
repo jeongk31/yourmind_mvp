@@ -76,16 +76,17 @@ const Header: React.FC = () => {
           }}
           onClick={() => navigate('/')}
         >
-          <Avatar
+          <Box
+            component="img"
+            src="/yourmind/logo.png"
+            alt="유어마인드"
             sx={{
-              bgcolor: 'primary.main',
-              mr: 2,
               width: 40,
               height: 40,
+              mr: 2,
+              borderRadius: 1,
             }}
-          >
-            <PsychologyIcon />
-          </Avatar>
+          />
           <Typography
             variant="h6"
             sx={{

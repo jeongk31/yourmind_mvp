@@ -906,7 +906,10 @@ ${recommendation}`;
           <body>
             <div class="header">
               <h1>채팅 요약</h1>
-              <p>유어마인드 AI 상담사</p>
+              <div style="display: flex; align-items: center; gap: 8px; margin: 16px 0;">
+                <img src="/yourmind/logo.png" alt="유어마인드" style="width: 24px; height: 24px; border-radius: 50%;" />
+                <p style="margin: 0;">유어마인드 상담사</p>
+              </div>
               <p>생성일: ${new Date().toLocaleDateString('ko-KR')}</p>
             </div>
             
@@ -1528,9 +1531,21 @@ ${recommendation}`;
               </IconButton>
               
               <Box sx={{ flex: 1, textAlign: 'center' }}>
-                <Typography variant="h6" fontWeight={600}>
-                  AI 상담사
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 1 }}>
+                  <Box
+                    component="img"
+                    src="/yourmind/logo.png"
+                    alt="유어마인드"
+                    sx={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: '50%',
+                    }}
+                  />
+                  <Typography variant="h6" fontWeight={600}>
+                    상담사
+                  </Typography>
+                </Box>
                 <Typography variant="body2" color="text.secondary">
                   {currentSession ? currentSession.title : '새로운 상담'}
                 </Typography>
@@ -1603,7 +1618,7 @@ ${recommendation}`;
                       >
                         <Box
                           sx={{
-                            bgcolor: message.sender === 'user' ? (user?.avatar_color || 'secondary.main') : 'primary.main',
+                            bgcolor: message.sender === 'user' ? (user?.avatar_color || 'secondary.main') : 'transparent',
                             width: 32,
                             height: 32,
                             borderRadius: '50%',
@@ -1618,7 +1633,20 @@ ${recommendation}`;
                             minHeight: 32, // Ensure minimum height
                           }}
                         >
-                          {message.sender === 'user' ? (user?.name?.charAt(0).toUpperCase() || 'U') : 'AI'}
+                          {message.sender === 'user' ? (
+                            user?.name?.charAt(0).toUpperCase() || 'U'
+                          ) : (
+                            <Box
+                              component="img"
+                              src="/yourmind/logo.png"
+                              alt="AI"
+                              sx={{
+                                width: 24,
+                                height: 24,
+                                borderRadius: '50%',
+                              }}
+                            />
+                          )}
                         </Box>
                         <Box>
                           <Paper
@@ -1659,8 +1687,17 @@ ${recommendation}`;
                   >
                     <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 2 }}>
                       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                        <Box sx={{ bgcolor: 'primary.main', width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0, minWidth: 32, minHeight: 32 }}>
-                          AI
+                        <Box sx={{ bgcolor: 'transparent', width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0, minWidth: 32, minHeight: 32 }}>
+                          <Box
+                            component="img"
+                            src="/yourmind/logo.png"
+                            alt="AI"
+                            sx={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: '50%',
+                            }}
+                          />
                         </Box>
                         <Paper
                           sx={{

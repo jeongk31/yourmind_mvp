@@ -99,14 +99,14 @@ const Home: React.FC = () => {
   const features = [
     {
       icon: '💬',
-      title: 'AI 상담',
-      description: '24시간 언제든지 AI와 대화하며 고민을 털어놓을 수 있습니다.',
+      title: '상담',
+      description: '24시간 언제든지 상담사와 대화하며 고민을 털어놓을 수 있습니다.',
       color: 'primary',
     },
     {
       icon: '🧠',
       title: '전문적 분석',
-      description: 'AI가 당신의 상태를 분석하여 전문적인 조언을 제공합니다.',
+      description: '상담사가 당신의 상태를 분석하여 전문적인 조언을 제공합니다.',
       color: 'secondary',
     },
     {
@@ -262,9 +262,21 @@ const Home: React.FC = () => {
         
         {/* AI Modes - Horizontal Cards */}
         <Box sx={{ mb: 6 }}>
-          <Typography variant="h5" sx={{ textAlign: 'center', mb: 3, fontWeight: 600, color: 'secondary.main' }}>
-            AI 모드
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 3 }}>
+            <Box
+              component="img"
+              src="/yourmind/logo.png"
+              alt="유어마인드"
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+              }}
+            />
+            <Typography variant="h5" sx={{ fontWeight: 600, color: 'secondary.main' }}>
+              모드
+            </Typography>
+          </Box>
           <Grid container spacing={2}>
             {chatServices.modes.map((service, index) => (
               <Grid item xs={12} sm={6} md={3} key={service.id}>
