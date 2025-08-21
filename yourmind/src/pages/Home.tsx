@@ -274,7 +274,7 @@ const Home: React.FC = () => {
               }}
             />
             <Typography variant="h5" sx={{ fontWeight: 600, color: 'secondary.main' }}>
-              모드
+              AI 모드
             </Typography>
           </Box>
           <Grid container spacing={2}>
