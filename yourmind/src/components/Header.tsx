@@ -78,7 +78,7 @@ const Header: React.FC = () => {
         >
           <Box
             component="img"
-            src="/yourmind/logo.png"
+            src="/logo.png"
             alt="유어마인드"
             sx={{
               width: 40,

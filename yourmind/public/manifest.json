@@ -3,7 +3,7 @@
   "name": "유어마인드 - AI와 함께하는 따뜻한 심리 상담",
   "icons": [
     {
-      "src": "yourmind/logo.png",
+      "src": "logo.png",
       "sizes": "192x192",
       "type": "image/png"
     }

@@ -907,7 +907,7 @@ ${recommendation}`;
             <div class="header">
               <h1>채팅 요약</h1>
               <div style="display: flex; align-items: center; gap: 8px; margin: 16px 0;">
-                <img src="/yourmind/logo.png" alt="유어마인드" style="width: 24px; height: 24px; border-radius: 50%;" />
+                <img src="/logo.png" alt="유어마인드" style="width: 24px; height: 24px; border-radius: 50%;" />
                 <p style="margin: 0;">유어마인드 상담사</p>
               </div>
               <p>생성일: ${new Date().toLocaleDateString('ko-KR')}</p>
@@ -1534,7 +1534,7 @@ ${recommendation}`;
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 1 }}>
                   <Box
                     component="img"
-                    src="/yourmind/logo.png"
+                    src="/logo.png"
                     alt="유어마인드"
                     sx={{
                       width: 24,
@@ -1638,7 +1638,7 @@ ${recommendation}`;
                           ) : (
                             <Box
                               component="img"
-                              src="/yourmind/logo.png"
+                              src="/logo.png"
                               alt="AI"
                               sx={{
                                 width: 24,
@@ -1690,7 +1690,7 @@ ${recommendation}`;
                         <Box sx={{ bgcolor: 'transparent', width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0, minWidth: 32, minHeight: 32 }}>
                           <Box
                             component="img"
-                            src="/yourmind/logo.png"
+                            src="/logo.png"
                             alt="AI"
                             sx={{
                               width: 24,

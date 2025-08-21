@@ -265,7 +265,7 @@ const Home: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 3 }}>
             <Box
               component="img"
-              src="/yourmind/logo.png"
+              src="/logo.png"
               alt="유어마인드"
               sx={{
                 width: 32,
